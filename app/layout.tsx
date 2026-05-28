@@ -9,7 +9,10 @@ export const metadata: Metadata = {
   title: "GlobalPLCParts | Industrial Automation Parts Supplier",
   description:
     "GlobalPLCParts supplies PLC, DCS, HMI, controller and industrial automation spare parts worldwide.",
-};
+verification: {
+  google: "4F3xpyojabevBgIuU9zHRqhyIOCCNFBYEOh4i82K1S0",
+},
+  };
 
 export default function RootLayout({
   children,
