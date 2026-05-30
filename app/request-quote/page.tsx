@@ -104,7 +104,7 @@ function RequestQuoteContent() {
             <Input
               label="Email Address *"
               value={form.email}
-              placeholder="your@email.com"
+              placeholder="summit.plc01@gmail.com"
               onChange={(value) => updateField("email", value)}
             />
 

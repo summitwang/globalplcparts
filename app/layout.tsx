@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 
-const email = "sales@globalplcparts.com";
-const whatsappNumber = "13774696836";
+const email = "summit.plc01@gmail.com";
+const whatsappNumber = "8613774696836";
 
 export const metadata: Metadata = {
   title: "GlobalPLCParts | Industrial Automation Parts Supplier",
@@ -76,8 +76,8 @@ export default function RootLayout({
               </Link>
 
               <Link href="/blog" className="hover:text-blue-600">
-  Blog
-</Link>
+                Blog
+              </Link>
 
               <Link href="/request-quote" className="hover:text-blue-600">
                 RFQ
