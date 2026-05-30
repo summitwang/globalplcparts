@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 
-const email = "summit.plc01@gmail.com";
+const email = "sales@globalplcparts.com";
 const whatsappNumber = "8613774696836";
 
 export const metadata: Metadata = {
