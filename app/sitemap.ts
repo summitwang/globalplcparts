@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/products",
     "/brands",
     "/request-quote",
+    "/blog",
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
@@ -20,20 +21,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
   }));
 
+  const blogPages = blogPosts.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.date),
+  }));
+
   return [
     ...staticPages,
     ...productPages,
-    {
-  url: "https://globalplcparts.com/blog",
-  lastModified: new Date(),
-  changeFrequency: "weekly",
-  priority: 0.7,
-},
-...blogPosts.map((post) => ({
-  url: `https://globalplcparts.com/blog/${post.slug}`,
-  lastModified: new Date(post.date),
-  changeFrequency: "monthly",
-  priority: 0.6,
-})),
+    ...blogPages,
   ];
 }
