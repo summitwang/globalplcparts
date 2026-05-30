@@ -75,6 +75,10 @@ export default function RootLayout({
                 Brands
               </Link>
 
+              <Link href="/blog" className="hover:text-blue-600">
+  Blog
+</Link>
+
               <Link href="/request-quote" className="hover:text-blue-600">
                 RFQ
               </Link>
