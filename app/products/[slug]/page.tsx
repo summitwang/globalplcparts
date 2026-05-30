@@ -74,8 +74,38 @@ export default async function ProductDetailPage({
 
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${message}`;
 
-  return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+const productJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: `${product.brand} ${product.model}`,
+  description: product.description,
+  sku: product.model,
+  mpn: product.model,
+  brand: {
+    "@type": "Brand",
+    name: product.brand,
+  },
+  category: product.category,
+  url: `https://globalplcparts.com/products/${product.slug}`,
+  offers: {
+    "@type": "Offer",
+    availability: "https://schema.org/InStock",
+    priceCurrency: "USD",
+    seller: {
+      "@type": "Organization",
+      name: "GlobalPLCParts",
+    },
+  },
+};
+
+return (
+  <main className="min-h-screen bg-slate-50 text-slate-900">
+  <script
+    type="application/ld+json"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify(productJsonLd),
+    }}
+  />
       
 
       <section className="bg-white border-b">
