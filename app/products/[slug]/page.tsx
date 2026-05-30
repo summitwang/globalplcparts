@@ -21,9 +21,15 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${product.brand} ${product.model} ${product.category} Supplier | GlobalPLCParts`,
-    description: `${product.brand} ${product.model} ${product.category} available for industrial automation, PLC, DCS and control system applications. Request quotation from GlobalPLCParts.`,
-    keywords: [
+  title: `${product.brand} ${product.model} ${product.category} Supplier | GlobalPLCParts`,
+
+  description: `${product.brand} ${product.model} ${product.category} available for industrial automation, PLC, DCS and control system applications. Request quotation from GlobalPLCParts.`,
+
+  alternates: {
+    canonical: `https://globalplcparts.com/products/${product.slug}`,
+  },
+
+  keywords: [
       product.model,
       product.brand,
       product.category,
