@@ -17,9 +17,14 @@ export async function generateMetadata({
   const brandName = brandProducts[0]?.brand || slug;
 
   return {
-    title: `${brandName} Industrial Automation Parts Supplier | GlobalPLCParts`,
-    description: `Browse ${brandName} PLC, DCS, controller, HMI, module and industrial automation spare parts. Request quotation from GlobalPLCParts.`,
-    keywords: [
+  title: `${brandName} Industrial Automation Parts Supplier | GlobalPLCParts`,
+  description: `Browse ${brandName} PLC, DCS, controller, HMI, module and industrial automation spare parts. Request quotation from GlobalPLCParts.`,
+
+  alternates: {
+    canonical: `https://globalplcparts.com/brands/${slug}`,
+  },
+
+  keywords: [
       `${brandName} supplier`,
       `${brandName} PLC parts`,
       `${brandName} automation parts`,
@@ -42,6 +47,14 @@ export default async function BrandDetailPage({
 
   const brandName = brandProducts[0]?.brand || slug;
 
+  const brandJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Brand",
+  name: brandName,
+  url: `https://globalplcparts.com/brands/${slug}`,
+  description: `${brandName} industrial automation parts supplier`,
+};
+
   const whatsappText = encodeURIComponent(
     `Hello GlobalPLCParts, I want to request a quote for ${brandName} industrial automation parts.`
   );
@@ -58,6 +71,14 @@ export default async function BrandDetailPage({
   }
 
   return (
+  <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(brandJsonLd),
+      }}
+    />
+
     <main className="min-h-screen bg-slate-50 text-slate-900">
       
 
@@ -193,6 +214,14 @@ export default async function BrandDetailPage({
               About {brandName} Automation Parts
             </h2>
 
+            <div className="hidden">
+  {brandProducts.slice(0, 30).map((item) => (
+    <span key={item.slug}>
+      {item.brand} {item.model} PLC Module,
+    </span>
+  ))}
+</div>
+
             <p className="text-slate-700 leading-8 mb-5">
               {brandName} products are widely used in industrial automation,
               manufacturing systems, process control, power plants, machinery
@@ -263,6 +292,7 @@ export default async function BrandDetailPage({
         WhatsApp
       </a>
     </main>
+    </>
   );
 }
 
