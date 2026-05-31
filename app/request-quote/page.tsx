@@ -1,13 +1,56 @@
+"use client";
+
+import { useState } from "react";
+
 const email = "sales@globalplcparts.com";
 const whatsappNumber = "13774696836";
 
-export const metadata = {
-  title: "Request Quote for Industrial Automation Parts | GlobalPLCParts",
-  description:
-    "Request a quote for PLC, DCS, HMI, drives and industrial automation spare parts. Send part number, quantity, company details and delivery requirements.",
-};
-
 export default function RequestQuotePage() {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setSuccess(false);
+    setError("");
+
+    const formData = new FormData(event.currentTarget);
+
+    const payload = {
+      company_name: formData.get("company_name"),
+      contact_name: formData.get("contact_name"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
+      country: formData.get("country"),
+      part_number: formData.get("part_number"),
+      brand: formData.get("brand"),
+      quantity: formData.get("quantity"),
+      condition_required: formData.get("condition_required"),
+      target_delivery_date: formData.get("target_delivery_date"),
+      rfq_details: formData.get("rfq_details"),
+    };
+
+    const res = await fetch("/api/rfq", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    setLoading(false);
+
+    if (!res.ok) {
+      setError("Submit failed. Please email sales@globalplcparts.com directly.");
+      return;
+    }
+
+    setSuccess(true);
+    event.currentTarget.reset();
+  }
+
   const whatsappText = encodeURIComponent(
     "Hello GlobalPLCParts, I want to request a quote for industrial automation parts."
   );
@@ -33,9 +76,7 @@ export default function RequestQuotePage() {
           </div>
 
           <div className="bg-white text-slate-900 rounded-3xl p-8 shadow-xl">
-            <h2 className="text-3xl font-black mb-4">
-              Fast RFQ Response
-            </h2>
+            <h2 className="text-3xl font-black mb-4">Fast RFQ Response</h2>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <Info title="Response Time" value="Within 24 Hours" />
@@ -49,30 +90,35 @@ export default function RequestQuotePage() {
 
       <section className="max-w-7xl mx-auto px-6 py-16 grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white border rounded-3xl p-8">
-          <h2 className="text-4xl font-black mb-8">
-            Submit Your RFQ Details
-          </h2>
+          <h2 className="text-4xl font-black mb-8">Submit Your RFQ Details</h2>
 
-          <form
-            action={`mailto:${email}`}
-            method="post"
-            encType="text/plain"
-            className="space-y-6"
-          >
+          {success && (
+            <div className="mb-6 rounded-2xl border border-green-300 bg-green-50 p-5 text-green-700 font-black">
+              RFQ submitted successfully. Our sales team will contact you soon.
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 rounded-2xl border border-red-300 bg-red-50 p-5 text-red-700 font-black">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid md:grid-cols-2 gap-5">
-              <Field label="Company Name" name="Company Name" required />
-              <Field label="Contact Name" name="Contact Name" required />
-              <Field label="Email Address" name="Email" type="email" required />
-              <Field label="WhatsApp / Phone" name="Phone" />
-              <Field label="Country / Region" name="Country" required />
-              <Field label="Target Delivery Date" name="Target Delivery Date" />
+              <Field label="Company Name" name="company_name" required />
+              <Field label="Contact Name" name="contact_name" required />
+              <Field label="Email Address" name="email" type="email" required />
+              <Field label="WhatsApp / Phone" name="phone" />
+              <Field label="Country / Region" name="country" required />
+              <Field label="Target Delivery Date" name="target_delivery_date" />
             </div>
 
             <div className="grid md:grid-cols-2 gap-5">
-              <Field label="Part Number / Model" name="Part Number" required />
-              <Field label="Brand" name="Brand" />
-              <Field label="Quantity" name="Quantity" required />
-              <Field label="Condition Required" name="Condition Required" />
+              <Field label="Part Number / Model" name="part_number" required />
+              <Field label="Brand" name="brand" />
+              <Field label="Quantity" name="quantity" required />
+              <Field label="Condition Required" name="condition_required" />
             </div>
 
             <div>
@@ -80,7 +126,7 @@ export default function RequestQuotePage() {
                 RFQ Details / BOM List
               </label>
               <textarea
-                name="RFQ Details"
+                name="rfq_details"
                 rows={8}
                 placeholder="Example: Allen Bradley 1756-EN2T, quantity 2 pcs, destination United States. Please quote price and lead time."
                 className="w-full border rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
@@ -89,9 +135,7 @@ export default function RequestQuotePage() {
             </div>
 
             <div className="bg-slate-50 border rounded-2xl p-5">
-              <h3 className="font-black mb-2">
-                Need to send a BOM file?
-              </h3>
+              <h3 className="font-black mb-2">Need to send a BOM file?</h3>
               <p className="text-slate-600 leading-7">
                 You can email your Excel, PDF or part list directly to{" "}
                 <a href={`mailto:${email}`} className="text-blue-600 font-black">
@@ -103,18 +147,17 @@ export default function RequestQuotePage() {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-700"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-700 disabled:bg-slate-400"
             >
-              Submit RFQ by Email
+              {loading ? "Submitting RFQ..." : "Submit RFQ"}
             </button>
           </form>
         </div>
 
         <aside className="space-y-6">
           <div className="bg-slate-900 text-white rounded-3xl p-8">
-            <h2 className="text-3xl font-black mb-4">
-              Contact Sales Directly
-            </h2>
+            <h2 className="text-3xl font-black mb-4">Contact Sales Directly</h2>
 
             <p className="text-slate-300 leading-7 mb-6">
               For urgent industrial spare parts, contact our sales team by
@@ -140,9 +183,7 @@ export default function RequestQuotePage() {
           </div>
 
           <div className="bg-white border rounded-3xl p-8">
-            <h2 className="text-3xl font-black mb-5">
-              What to Include
-            </h2>
+            <h2 className="text-3xl font-black mb-5">What to Include</h2>
 
             <div className="space-y-3">
               <Point text="Part number or model" />
@@ -155,9 +196,7 @@ export default function RequestQuotePage() {
           </div>
 
           <div className="bg-white border rounded-3xl p-8">
-            <h2 className="text-3xl font-black mb-5">
-              We Supply
-            </h2>
+            <h2 className="text-3xl font-black mb-5">We Supply</h2>
 
             <div className="space-y-3">
               <Point text="PLC Modules" />
@@ -173,9 +212,7 @@ export default function RequestQuotePage() {
 
       <section className="max-w-7xl mx-auto px-6 pb-16">
         <div className="bg-white border rounded-3xl p-8">
-          <h2 className="text-4xl font-black mb-8">
-            RFQ Process
-          </h2>
+          <h2 className="text-4xl font-black mb-8">RFQ Process</h2>
 
           <div className="grid md:grid-cols-4 gap-5">
             <Step number="1" title="Send Part Number" />
@@ -233,11 +270,7 @@ function Info({ title, value }: { title: string; value: string }) {
 }
 
 function Point({ text }: { text: string }) {
-  return (
-    <div className="border rounded-xl p-3 font-bold">
-      ✓ {text}
-    </div>
-  );
+  return <div className="border rounded-xl p-3 font-bold">✓ {text}</div>;
 }
 
 function Step({ number, title }: { number: string; title: string }) {
