@@ -264,23 +264,58 @@ export default async function BrandDetailPage({
               </div>
 
               <p className="text-slate-700 leading-8 mb-5">
-                {brandName} products are widely used in industrial automation,
-                manufacturing systems, process control, power plants, machinery
-                control, water treatment, oil and gas, and factory maintenance
-                projects.
-              </p>
+  {brandName} is one of the most recognized industrial automation brands
+  used in manufacturing, energy, oil and gas, water treatment,
+  pharmaceutical production, food processing and infrastructure projects
+  worldwide.
+</p>
 
-              <p className="text-slate-700 leading-8">
-                GlobalPLCParts helps buyers source {brandName} spare parts by
-                model number and supports quotation, stock checking, lead time
-                confirmation and global shipping.
-              </p>
+<p className="text-slate-700 leading-8 mb-5">
+  GlobalPLCParts supplies new, surplus, refurbished and obsolete
+  {` ${brandName} `}industrial automation spare parts. Our sourcing team
+  helps maintenance engineers, system integrators and procurement
+  departments locate hard-to-find modules and replacement components.
+</p>
+
+<p className="text-slate-700 leading-8 mb-5">
+  Common product categories include PLC modules, DCS modules, HMI
+  panels, communication processors, power supplies, I/O modules,
+  industrial controllers and network interfaces.
+</p>
+
+<p className="text-slate-700 leading-8 mb-5">
+  Whether you need a discontinued model, emergency replacement part or
+  long-term sourcing support, our team can help identify compatible
+  options and provide fast quotation turnaround.
+</p>
+
+<p className="text-slate-700 leading-8">
+  We support worldwide industrial customers across North America,
+  Europe, Middle East, Southeast Asia, Australia and Latin America,
+  providing reliable sourcing support for automation maintenance and
+  production continuity.
+</p>
             </div>
 
             <div className="bg-slate-50 border rounded-3xl p-8">
               <h3 className="text-3xl font-black mb-6">
                 Common {brandName} Applications
               </h3>
+
+              <div className="mt-8">
+  <h3 className="text-3xl font-black mb-5">
+    Popular {brandName} Product Categories
+  </h3>
+
+  <div className="grid sm:grid-cols-2 gap-4">
+    <Point text="PLC Modules" />
+    <Point text="DCS Modules" />
+    <Point text="Power Supply Modules" />
+    <Point text="Communication Modules" />
+    <Point text="Remote I/O Systems" />
+    <Point text="Industrial Controllers" />
+  </div>
+</div>
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <Point text="PLC control systems" />
@@ -314,6 +349,27 @@ export default async function BrandDetailPage({
             />
           </div>
         </section>
+
+        <section className="max-w-7xl mx-auto px-6 pb-16">
+  <div className="bg-white border rounded-3xl p-8">
+
+    <h2 className="text-4xl font-black mb-8">
+      Why Buy {brandName} Parts From GlobalPLCParts?
+    </h2>
+
+    <div className="grid md:grid-cols-2 gap-5">
+
+      <Point text="Fast RFQ Response" />
+      <Point text="Worldwide Shipping" />
+      <Point text="Obsolete Parts Sourcing" />
+      <Point text="Industrial Automation Expertise" />
+      <Point text="Multi-Brand Inventory Access" />
+      <Point text="B2B Procurement Support" />
+
+    </div>
+
+  </div>
+</section>
 
         <section className="max-w-7xl mx-auto px-6 pb-16">
           <div className="bg-slate-900 text-white rounded-3xl p-10 text-center">
