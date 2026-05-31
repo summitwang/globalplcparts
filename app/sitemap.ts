@@ -4,6 +4,7 @@ import { blogPosts } from "@/data/blog-posts";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://globalplcparts.com";
+  const lastModified = new Date();
 
   const staticPages = [
     "",
@@ -13,12 +14,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/blog",
   ].map((route) => ({
     url: `${baseUrl}${route}`,
-    lastModified: new Date(),
+    lastModified,
+  }));
+
+  const brandSlugs = [
+    ...new Set(
+      products
+        .map((product) => product.brandSlug)
+        .filter(Boolean)
+    ),
+  ];
+
+  const brandPages = brandSlugs.map((slug) => ({
+    url: `${baseUrl}/brands/${slug}`,
+    lastModified,
   }));
 
   const productPages = products.map((product) => ({
     url: `${baseUrl}/products/${product.slug}`,
-    lastModified: new Date(),
+    lastModified,
   }));
 
   const blogPages = blogPosts.map((post) => ({
@@ -28,6 +42,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     ...staticPages,
+    ...brandPages,
     ...productPages,
     ...blogPages,
   ];
