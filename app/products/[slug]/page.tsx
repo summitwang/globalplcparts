@@ -21,7 +21,7 @@ export async function generateMetadata({
   }
 
   return {
-  title: `${product.brand} ${product.model} ${product.category} Supplier | GlobalPLCParts`,
+  title: `${product.brand} ${product.model} PLC Module Supplier | GlobalPLCParts`,
 
   description: `${product.brand} ${product.model} ${product.category} available for industrial automation, PLC, DCS and control system applications. Request quotation from GlobalPLCParts.`,
 
@@ -233,6 +233,86 @@ return (
           </div>
         </div>
       </section>
+
+      <section className="max-w-7xl mx-auto px-6 pb-16">
+  <div className="grid lg:grid-cols-2 gap-8">
+
+    <div className="bg-white border rounded-3xl p-8">
+      <h2 className="text-3xl font-black mb-6">
+        Applications
+      </h2>
+
+      <ul className="space-y-3">
+        <li>✓ PLC Control Systems</li>
+        <li>✓ DCS Process Automation</li>
+        <li>✓ Factory Maintenance</li>
+        <li>✓ Production Line Control</li>
+        <li>✓ Industrial Machinery</li>
+        <li>✓ Replacement Projects</li>
+      </ul>
+    </div>
+
+    <div className="bg-white border rounded-3xl p-8">
+      <h2 className="text-3xl font-black mb-6">
+        Features
+      </h2>
+
+      <ul className="space-y-3">
+        <li>✓ Worldwide Supply</li>
+        <li>✓ Fast RFQ Response</li>
+        <li>✓ Obsolete Parts Support</li>
+        <li>✓ Global Shipping</li>
+        <li>✓ Industrial Automation Expertise</li>
+        <li>✓ Quality Inspection Available</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<section className="max-w-7xl mx-auto px-6 pb-16">
+  <div className="bg-white border rounded-3xl p-8">
+
+    <h2 className="text-3xl font-black mb-8">
+      Frequently Asked Questions
+    </h2>
+
+    <div className="space-y-6">
+
+      <div>
+        <h3 className="font-black mb-2">
+          Is {product.model} available in stock?
+        </h3>
+
+        <p>
+          Contact our sales team for current stock status and lead time.
+        </p>
+      </div>
+
+      <div>
+        <h3 className="font-black mb-2">
+          Do you ship worldwide?
+        </h3>
+
+        <p>
+          Yes. GlobalPLCParts supports worldwide shipping.
+        </p>
+      </div>
+
+      <div>
+        <h3 className="font-black mb-2">
+          Can you supply obsolete parts?
+        </h3>
+
+        <p>
+          Yes. We specialize in sourcing hard-to-find and obsolete industrial automation parts.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</section>
 
       {relatedProducts.length > 0 && (
         <section className="max-w-7xl mx-auto px-6 pb-16">
