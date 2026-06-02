@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     if (process.env.RESEND_API_KEY) {
       await resend.emails.send({
-        from: "GlobalPLCParts RFQ <onboarding@resend.dev>",
+        from: "GlobalPLCParts RFQ <sales@globalplcparts.com>",
         to: ["sales@globalplcparts.com"],
         subject: `New RFQ Received - ${rfqData.company_name || rfqData.part_number}`,
         html: `
