@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
       if (rfqData.email) {
         await resend.emails.send({
-          from: "GlobalPLCParts <onboarding@resend.dev>",
+          from: "GlobalPLCParts RFQ <sales@globalplcparts.com>",
           to: [rfqData.email],
           subject: "We received your RFQ - GlobalPLCParts",
           html: `
