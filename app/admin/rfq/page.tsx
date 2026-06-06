@@ -29,6 +29,9 @@ type RFQ = {
   quote_notes?: string;
   created_at?: string;
   updated_at?: string;
+  attachment_url?: string;
+attachment_name?: string;
+attachment_type?: string;
 };
 
 const statuses = ["new", "contacted", "quoted", "won", "lost"];
@@ -477,6 +480,22 @@ export default function AdminRFQPage() {
                       </div>
                     )}
 
+{item.attachment_url && (
+  <div className="mt-4 border rounded-xl p-4 bg-blue-50">
+    <h4 className="font-black mb-3">
+      RFQ Attachment
+    </h4>
+
+    <AttachmentLink
+      url={item.attachment_url}
+      name={item.attachment_name}
+    />
+
+    <div className="text-xs text-slate-500 mt-2">
+      {item.attachment_type}
+    </div>
+  </div>
+)}
                     <div className="mt-6 grid md:grid-cols-2 gap-5">
                       <div className="bg-yellow-50 border rounded-2xl p-5">
                         <h3 className="font-black mb-2">Internal Notes</h3>
@@ -507,6 +526,7 @@ export default function AdminRFQPage() {
                   </div>
                 );
               })}
+
 
               {filtered.length === 0 && (
                 <div className="bg-white border rounded-3xl p-10 text-center">
@@ -584,4 +604,25 @@ function InfoLine({ label, value }: { label: string; value?: string }) {
 function formatDate(date?: string) {
   if (!date) return "-";
   return new Date(date).toLocaleString();
+}
+
+function AttachmentLink({
+  url,
+  name,
+}: {
+  url?: string;
+  name?: string;
+}) {
+  if (!url) return null;
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-black"
+    >
+      📎 {name || "Download Attachment"}
+    </a>
+  );
 }
