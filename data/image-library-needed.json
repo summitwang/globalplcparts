@@ -1,0 +1,110 @@
+[
+  {
+    "brand": "Allen Bradley",
+    "brandSlug": "allen-bradley",
+    "products": 140,
+    "images": 212,
+    "folder": "/product-images/real/allen-bradley",
+    "needImages": 0,
+    "status": "OK"
+  },
+  {
+    "brand": "Schneider",
+    "brandSlug": "schneider",
+    "products": 96,
+    "images": 4,
+    "folder": "/product-images/real/schneider",
+    "needImages": 1,
+    "status": "LOW"
+  },
+  {
+    "brand": "ABB",
+    "brandSlug": "abb",
+    "products": 96,
+    "images": 4,
+    "folder": "/product-images/real/abb",
+    "needImages": 1,
+    "status": "LOW"
+  },
+  {
+    "brand": "Siemens",
+    "brandSlug": "siemens",
+    "products": 92,
+    "images": 5,
+    "folder": "/product-images/real/siemens",
+    "needImages": 0,
+    "status": "OK"
+  },
+  {
+    "brand": "Honeywell",
+    "brandSlug": "honeywell",
+    "products": 72,
+    "images": 0,
+    "folder": "/product-images/real/honeywell",
+    "needImages": 8,
+    "status": "EMPTY"
+  },
+  {
+    "brand": "Yokogawa",
+    "brandSlug": "yokogawa",
+    "products": 72,
+    "images": 0,
+    "folder": "/product-images/real/yokogawa",
+    "needImages": 8,
+    "status": "EMPTY"
+  },
+  {
+    "brand": "Emerson",
+    "brandSlug": "emerson",
+    "products": 72,
+    "images": 0,
+    "folder": "/product-images/real/emerson",
+    "needImages": 8,
+    "status": "EMPTY"
+  },
+  {
+    "brand": "Bently Nevada",
+    "brandSlug": "bently-nevada",
+    "products": 72,
+    "images": 0,
+    "folder": "/product-images/real/bently-nevada",
+    "needImages": 8,
+    "status": "EMPTY"
+  },
+  {
+    "brand": "GE Fanuc",
+    "brandSlug": "ge-fanuc",
+    "products": 72,
+    "images": 0,
+    "folder": "/product-images/real/ge-fanuc",
+    "needImages": 8,
+    "status": "EMPTY"
+  },
+  {
+    "brand": "Mitsubishi",
+    "brandSlug": "mitsubishi",
+    "products": 72,
+    "images": 0,
+    "folder": "/product-images/real/mitsubishi",
+    "needImages": 8,
+    "status": "EMPTY"
+  },
+  {
+    "brand": "Omron",
+    "brandSlug": "omron",
+    "products": 72,
+    "images": 0,
+    "folder": "/product-images/real/omron",
+    "needImages": 8,
+    "status": "EMPTY"
+  },
+  {
+    "brand": "Foxboro",
+    "brandSlug": "foxboro",
+    "products": 72,
+    "images": 0,
+    "folder": "/product-images/real/foxboro",
+    "needImages": 8,
+    "status": "EMPTY"
+  }
+]

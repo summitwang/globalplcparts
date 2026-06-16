@@ -214,10 +214,10 @@ export default async function BrandDetailPage({
                 <div className="h-48 bg-slate-100 border-b flex items-center justify-center">
                   {product.image ? (
                     <img
-                      src={product.image}
-                      alt={`${product.brand} ${product.model}`}
-                      className="w-full h-full object-contain p-5"
-                    />
+  src={product.image}
+  alt={`${product.brand} ${product.model}`}
+  className="max-w-full max-h-full object-contain p-5"
+/>
                   ) : (
                     <div className="text-center">
                       <div className="text-4xl font-black text-blue-600">

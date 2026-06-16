@@ -1,9 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { jsPDF } from "jspdf";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 type RFQ = {
   id: string;
+  created_at?: string;
   company_name?: string;
   contact_name?: string;
   email?: string;
@@ -11,618 +15,727 @@ type RFQ = {
   country?: string;
   part_number?: string;
   brand?: string;
-  quantity?: string;
+  quantity?: string | number;
   condition_required?: string;
   target_delivery_date?: string;
   rfq_details?: string;
   status?: string;
-  internal_notes?: string;
   priority?: string;
-  estimated_value?: string;
-  next_follow_up?: string;
+  estimated_value?: string | number;
   pipeline_status?: string;
-  quote_generated_at?: string;
-  quote_sent_at?: string;
+  internal_notes?: string;
   quote_status?: string;
-  quote_unit_price?: string;
-  quote_lead_time?: string;
+  quote_generated?: boolean;
+  quote_sent?: boolean;
   quote_notes?: string;
-  created_at?: string;
-  updated_at?: string;
   attachment_url?: string;
-attachment_name?: string;
-attachment_type?: string;
+  attachment_name?: string;
+  follow_up_date?: string;
 };
 
-const statuses = ["new", "contacted", "quoted", "won", "lost"];
-const priorities = ["normal", "high", "vip"];
-const pipelines = ["New", "Contacted", "Quoted", "Won", "Lost"];
+const API_URL = "/api/admin/rfq";
 
-export default function AdminRFQPage() {
+const statusOptions = ["new", "sourcing", "quoted", "won", "lost"];
+const priorityOptions = ["low", "normal", "high", "urgent"];
+const quoteStatusOptions = ["Draft", "Waiting Supplier Price", "Ready", "Sent"];
+
+function formatDate(value?: string) {
+  if (!value) return "-";
+  return new Date(value).toLocaleString();
+}
+
+function Logo() {
+  return (
+    <div className="px-6 py-6 border-b border-blue-900">
+      <div className="text-3xl font-black tracking-tight text-white leading-none">
+        GL<span className="inline-block">🌐</span>BAL
+      </div>
+      <div className="text-sm font-bold text-white tracking-widest mt-1">
+        PLC PARTS
+      </div>
+      <div className="w-28 h-1 bg-red-500 mt-3 rounded-full" />
+    </div>
+  );
+}
+
+export default function RFQAdminPage() {
   const [password, setPassword] = useState("");
-  const [rfqs, setRfqs] = useState<RFQ[]>([]);
-  const [loading, setLoading] = useState(false);
   const [authed, setAuthed] = useState(false);
-  const [search, setSearch] = useState("");
-  const [error, setError] = useState("");
-  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [rfqs, setRfqs] = useState<RFQ[]>([]);
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const selected = useMemo(
+    () => rfqs.find((r) => r.id === selectedId) || rfqs[0],
+    [rfqs, selectedId]
+  );
 
   async function loadRFQs() {
     setLoading(true);
-    setError("");
+    try {
+      const res = await fetch(API_URL, {
+        headers: {
+          "x-admin-password": password,
+        },
+      });
 
-    const res = await fetch("/api/admin/rfq", {
-      headers: { "x-admin-password": password },
-    });
+      const data = await res.json();
 
-    setLoading(false);
+      if (!res.ok) {
+        alert(data.error || "Load RFQ failed");
+        return;
+      }
 
-    if (!res.ok) {
-      const text = await res.text();
-      setError(text);
-      setAuthed(false);
-      return;
+      const list = Array.isArray(data) ? data : data.data || data.rfqs || [];
+      setRfqs(list);
+      if (list.length > 0 && !selectedId) {
+        setSelectedId(list[0].id);
+      }
+      setAuthed(true);
+    } catch (err) {
+      alert("Load RFQ failed");
+    } finally {
+      setLoading(false);
     }
-
-    const json = await res.json();
-    setRfqs(json.data || []);
-    setAuthed(true);
   }
 
-  async function updateRFQField(id: string, field: string, value: any) {
-    const res = await fetch("/api/admin/rfq", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-password": password,
-      },
-      body: JSON.stringify({ id, [field]: value }),
-    });
+  async function updateRFQ(id: string, patch: Partial<RFQ>) {
+    setSaving(true);
+    try {
+      const res = await fetch(API_URL, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": password,
+        },
+        body: JSON.stringify({ id, ...patch }),
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      alert(text);
-      return;
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Update failed");
+        return;
+      }
+
+      setRfqs((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, ...patch } : r))
+      );
+    } catch {
+      alert("Update failed");
+    } finally {
+      setSaving(false);
     }
-
-    setRfqs((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      )
-    );
   }
-
-  async function sendQuote(id: string) {
-    setSendingId(id);
-
-    const res = await fetch("/api/rfq/quote", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id,
-        adminPassword: password,
-      }),
-    });
-
-    setSendingId(null);
-
-    if (!res.ok) {
-      const text = await res.text();
-      alert(text);
-      return;
-    }
-
-    await loadRFQs();
-    alert("Quote email sent successfully.");
-  }
-
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-
-    return rfqs.filter((item) =>
-      [
-        item.company_name,
-        item.contact_name,
-        item.email,
-        item.phone,
-        item.country,
-        item.part_number,
-        item.brand,
-        item.quantity,
-        item.status,
-        item.priority,
-        item.pipeline_status,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [rfqs, search]);
-
-  const stats = useMemo(() => {
-    const total = rfqs.length;
-    const newCount = rfqs.filter((x) => x.status === "new").length;
-    const quoted = rfqs.filter(
-      (x) => x.status === "quoted" || x.pipeline_status === "Quoted"
-    ).length;
-    const won = rfqs.filter(
-      (x) => x.status === "won" || x.pipeline_status === "Won"
-    ).length;
-    const lost = rfqs.filter(
-      (x) => x.status === "lost" || x.pipeline_status === "Lost"
-    ).length;
-
-    const pipelineValue = rfqs.reduce((sum, x) => {
-      const n = Number(x.estimated_value || 0);
-      return sum + (Number.isFinite(n) ? n : 0);
-    }, 0);
-
-    const sentQuotes = rfqs.filter((x) => x.quote_status === "Sent").length;
-
-    return { total, newCount, quoted, won, lost, pipelineValue, sentQuotes };
-  }, [rfqs]);
 
   function exportCSV() {
-    const headers = [
-      "created_at",
-      "status",
-      "pipeline_status",
-      "priority",
-      "estimated_value",
-      "next_follow_up",
-      "quote_status",
-      "quote_unit_price",
-      "quote_lead_time",
-      "quote_sent_at",
-      "company_name",
-      "contact_name",
-      "email",
-      "phone",
-      "country",
-      "part_number",
-      "brand",
-      "quantity",
-      "condition_required",
-      "target_delivery_date",
-      "rfq_details",
-      "internal_notes",
-      "quote_notes",
-    ];
+    const rows = rfqs.map((r) => ({
+      Date: formatDate(r.created_at),
+      Company: r.company_name || "",
+      Contact: r.contact_name || "",
+      Email: r.email || "",
+      Phone: r.phone || "",
+      Country: r.country || "",
+      Brand: r.brand || "",
+      Part: r.part_number || "",
+      Qty: r.quantity || "",
+      Status: r.status || "",
+      Priority: r.priority || "",
+      Pipeline: r.pipeline_status || "",
+      EstimatedValue: r.estimated_value || "",
+      FollowUpDate: r.follow_up_date || "",
+    }));
 
-    const rows = filtered.map((item) =>
-      headers
-        .map((key) => {
-          const value = String(item[key as keyof RFQ] || "");
-          return `"${value.replace(/"/g, '""')}"`;
-        })
-        .join(",")
-    );
+    const csv =
+      Object.keys(rows[0] || {}).join(",") +
+      "\n" +
+      rows
+        .map((row) =>
+          Object.values(row)
+            .map((v) => `"${String(v).replaceAll('"', '""')}"`)
+            .join(",")
+        )
+        .join("\n");
 
-    const csv = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
-    a.download = "globalplcparts-rfq-crm-v3.csv";
+    a.download = "globalplcparts-rfq.csv";
     a.click();
-
     URL.revokeObjectURL(url);
   }
 
-  return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-5xl font-black mb-3">RFQ CRM PRO MAX v3</h1>
-          <p className="text-slate-600">
-            Sales funnel, quote email, RFQ follow-up and CRM pipeline.
-          </p>
-        </div>
-
-        {!authed && (
-          <div className="bg-white border rounded-3xl p-8 max-w-xl">
-            <h2 className="text-3xl font-black mb-4">Admin Login</h2>
-
-            <input
-              type="password"
-              placeholder="Enter admin password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border rounded-2xl px-4 py-4 mb-4"
-            />
-
-            {error && (
-              <p className="text-red-600 font-bold text-sm mb-4 break-all">
-                {error}
-              </p>
-            )}
-
-            <button
-              onClick={loadRFQs}
-              disabled={loading}
-              className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black disabled:bg-slate-400"
-            >
-              {loading ? "Loading..." : "Enter Dashboard"}
-            </button>
+  if (!authed) {
+    return (
+      <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border p-8">
+          <div className="mb-8">
+            <div className="text-4xl font-black text-blue-900">
+              GL🌐BAL
+            </div>
+            <div className="font-bold tracking-widest text-slate-700">
+              PLC PARTS RFQ CRM
+            </div>
           </div>
-        )}
 
-        {authed && (
-          <>
-            <div className="grid md:grid-cols-7 gap-5 mb-8">
-              <Stat title="Total RFQs" value={stats.total} />
-              <Stat title="New" value={stats.newCount} />
-              <Stat title="Quoted" value={stats.quoted} />
-              <Stat title="Won" value={stats.won} />
-              <Stat title="Lost" value={stats.lost} />
-              <Stat title="Quotes Sent" value={stats.sentQuotes} />
-              <Stat
-                title="Pipeline Value"
-                value={`$${stats.pipelineValue.toLocaleString()}`}
-              />
+          <h1 className="text-2xl font-black mb-2">Admin Login</h1>
+          <p className="text-slate-500 mb-6">
+            Enter admin password to manage RFQ requests.
+          </p>
+
+          <input
+            type="password"
+            placeholder="Enter admin password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border rounded-xl px-4 py-3 mb-4"
+          />
+
+          <button
+            onClick={loadRFQs}
+            disabled={loading || !password}
+            className="w-full bg-blue-600 text-white rounded-xl py-3 font-black disabled:bg-slate-400"
+          >
+            {loading ? "Loading..." : "Login"}
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+ // 生成单个 PDF
+function generateSinglePDF(rfq: RFQ | null) {
+  if (!rfq) return;
+
+  const pdf = new jsPDF();
+
+  pdf.setFontSize(18);
+  pdf.text("GlobalPLCParts RFQ", 20, 20);
+
+  pdf.setFontSize(12);
+  pdf.text(`Company: ${rfq.company_name || ""}`, 20, 40);
+  pdf.text(`Contact: ${rfq.contact_name || ""}`, 20, 50);
+  pdf.text(`Email: ${rfq.email || ""}`, 20, 60);
+  pdf.text(`Part Number: ${rfq.part_number || ""}`, 20, 70);
+  pdf.text(`Brand: ${rfq.brand || ""}`, 20, 80);
+  pdf.text(`Quantity: ${rfq.quantity || ""}`, 20, 90);
+
+  pdf.text(`RFQ Details: ${rfq.rfq_details || ""}`, 20, 110);
+
+  pdf.save(`RFQ-${rfq.id}.pdf`);
+}
+
+// 批量生成 PDF
+function generateBatchPDF() {
+  if (!rfqs?.length) {
+    alert("No RFQ data to export.");
+    return;
+  }
+
+  const pdf = new jsPDF();
+
+  rfqs.forEach((r, index) => {
+    if (index > 0) pdf.addPage();
+
+    pdf.setFontSize(18);
+    pdf.text("GlobalPLCParts RFQ", 20, 20);
+
+    pdf.setFontSize(12);
+    pdf.text(`Company: ${r.company_name || ""}`, 20, 40);
+    pdf.text(`Contact: ${r.contact_name || ""}`, 20, 50);
+    pdf.text(`Email: ${r.email || ""}`, 20, 60);
+    pdf.text(`Part Number: ${r.part_number || ""}`, 20, 70);
+    pdf.text(`Brand: ${r.brand || ""}`, 20, 80);
+    pdf.text(`Quantity: ${r.quantity || ""}`, 20, 90);
+    pdf.text(`RFQ Details: ${r.rfq_details || ""}`, 20, 110);
+  });
+
+  pdf.save(`RFQs-Batch.pdf`);
+}
+
+// 批量导出 Excel
+function exportBatchExcel() {
+  if (!rfqs || rfqs.length === 0) return;
+
+  const wsData = rfqs.map((r) => ({
+    Created: r.created_at || "",
+    Company: r.company_name || "",
+    Contact: r.contact_name || "",
+    Email: r.email || "",
+    Phone: r.phone || "",
+    Country: r.country || "",
+    Brand: r.brand || "",
+    "Part Num": r.part_number || "",
+    Quantity: r.quantity || "",
+    Condition: r.condition_required || "",
+    Status: r.status || "",
+    Priority: r.priority || "",
+    Pipeline: r.pipeline_status || "",
+    "Quote Status": r.quote_status || "",
+    "Estimated Value": r.estimated_value || "",
+    "Follow-up": r.follow_up_date || "",
+    "RFQ Details": r.rfq_details || "",
+    "Internal Notes": r.internal_notes || "",
+    "Quote Notes": r.quote_notes || "",
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "RFQs");
+
+  const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([excelBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
+  saveAs(blob, `GlobalPLCParts-RFQs-${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+function sendBatchEmails() {
+  alert("Batch Email will be added in the next step.");
+}
+
+  return (
+    <main className="min-h-screen bg-slate-100 text-slate-900">
+      <div className="flex min-h-screen">
+        <aside className="w-64 bg-gradient-to-b from-blue-950 to-slate-950 text-white hidden lg:flex flex-col">
+          <Logo />
+
+          <nav className="p-4 space-y-2 text-sm font-bold">
+            <div className="px-4 py-3 rounded-xl bg-blue-600">📥 RFQ Management</div>
+            <div className="px-4 py-3 rounded-xl hover:bg-white/10">📊 Dashboard</div>
+            <div className="px-4 py-3 rounded-xl hover:bg-white/10">🧾 Quotes</div>
+            <div className="px-4 py-3 rounded-xl hover:bg-white/10">👥 Customers</div>
+            <div className="px-4 py-3 rounded-xl hover:bg-white/10">📦 Products</div>
+            <div className="px-4 py-3 rounded-xl hover:bg-white/10">⏰ Follow-up</div>
+            <div className="px-4 py-3 rounded-xl hover:bg-white/10">⚙️ Settings</div>
+          </nav>
+
+          <div className="mt-auto p-5 border-t border-white/10 text-xs text-slate-300">
+            <div className="font-black text-white">Global PLC Parts</div>
+            <div>sales@globalplcparts.com</div>
+          </div>
+        </aside>
+
+        <section className="flex-1 p-4 lg:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-black">RFQ CRM PRO MAX v5</h1>
+              <p className="text-slate-500">
+                Sales pipeline, quote draft, attachments and follow-up.
+              </p>
             </div>
 
-            <div className="bg-white border rounded-3xl p-6 mb-8 flex flex-col md:flex-row gap-4 justify-between">
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search company, contact, part number, country, email..."
-                className="border rounded-2xl px-4 py-3 flex-1"
-              />
+            <div className="flex gap-3">
+              <button
+                onClick={loadRFQs}
+                className="px-4 py-2 rounded-xl border bg-white font-black"
+              >
+                Refresh
+              </button>
+              <button
+                onClick={exportCSV}
+                className="px-4 py-2 rounded-xl bg-green-600 text-white font-black"
+              >
+                Export CSV
+              </button>
+            </div>
+          </div>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={loadRFQs}
-                  className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black"
-                >
-                  Refresh
-                </button>
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            <div className="xl:col-span-3 bg-white rounded-3xl border shadow-sm overflow-hidden">
+              <div className="p-5 border-b">
+                <h2 className="font-black text-lg">RFQ List</h2>
+                <p className="text-sm text-slate-500">{rfqs.length} requests</p>
+              </div>
 
-                <button
-                  onClick={exportCSV}
-                  className="bg-green-600 text-white px-6 py-3 rounded-2xl font-black"
-                >
-                  Export CSV
-                </button>
+              <div className="max-h-[760px] overflow-auto">
+                {rfqs.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setSelectedId(r.id)}
+                    className={`w-full text-left p-4 border-b hover:bg-blue-50 ${
+                      selected?.id === r.id ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    <div className="flex justify-between gap-2">
+                      <div className="font-black truncate">
+                        {r.company_name || "Unknown Company"}
+                      </div>
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold">
+                        {r.status || "new"}
+                      </span>
+                    </div>
+                    <div className="text-sm text-slate-600 truncate mt-1">
+                      {r.part_number || "-"} · {r.brand || "-"}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-1">
+                      {formatDate(r.created_at)}
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="grid md:grid-cols-5 gap-4 mb-8">
-              {pipelines.map((p) => (
-                <div key={p} className="bg-white border rounded-2xl p-4">
-                  <p className="font-black">{p}</p>
-                  <p className="text-3xl font-black mt-2">
-                    {rfqs.filter((x) => (x.pipeline_status || "New") === p).length}
-                  </p>
+            <div className="xl:col-span-9">
+              {!selected ? (
+                <div className="bg-white rounded-3xl border p-10 text-center">
+                  No RFQ found.
                 </div>
-              ))}
-            </div>
-
-            <div className="space-y-6">
-              {filtered.map((item) => {
-                const mailSubject = encodeURIComponent(
-                  `Quotation for ${item.part_number || "your RFQ"}`
-                );
-
-                const mailBody = encodeURIComponent(
-                  `Hello ${item.contact_name || ""},\n\nThank you for your RFQ for ${
-                    item.part_number || ""
-                  }.\n\nPlease find our quotation details below:\n\nUnit Price: ${
-                    item.quote_unit_price || ""
-                  }\nLead Time: ${item.quote_lead_time || ""}\n\nBest regards,\nGlobalPLCParts`
-                );
-
-                const cleanPhone = String(item.phone || "").replace(/\D/g, "");
-
-                return (
-                  <div key={item.id} className="bg-white border rounded-3xl p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                      <div className="flex-1">
-                        <div className="flex flex-wrap gap-3 mb-4">
-                          <Badge text={item.status || "new"} type="status" />
-                          <Badge text={item.pipeline_status || "New"} type="pipeline" />
-                          <Badge text={item.priority || "normal"} type="priority" />
-                          <Badge text={item.quote_status || "Draft"} type="quote" />
-                          <Badge text={item.country || "No Country"} />
-                          <Badge text={formatDate(item.created_at)} />
-                        </div>
-
-                        <h2 className="text-3xl font-black mb-2">
-                          {item.part_number || "No Part Number"}
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-white rounded-3xl border shadow-sm p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                      <div>
+                        <div className="text-sm text-slate-500">RFQ Detail</div>
+                        <h2 className="text-3xl font-black">
+                          #{selected.id.slice(0, 8)}
                         </h2>
-
-                        <p className="text-slate-600 mb-4">
-                          {item.brand || "No Brand"} · Qty: {item.quantity || "-"} ·
-                          Condition: {item.condition_required || "-"}
-                        </p>
-
-                        <div className="grid md:grid-cols-2 gap-3 text-sm">
-                          <InfoLine label="Company" value={item.company_name} />
-                          <InfoLine label="Contact" value={item.contact_name} />
-                          <InfoLine label="Email" value={item.email} />
-                          <InfoLine label="Phone" value={item.phone} />
-                          <InfoLine label="Country" value={item.country} />
-                          <InfoLine
-                            label="Target Delivery"
-                            value={item.target_delivery_date}
-                          />
-                          <InfoLine
-                            label="Quote Sent At"
-                            value={formatDate(item.quote_sent_at)}
-                          />
-                          <InfoLine
-                            label="Last Updated"
-                            value={formatDate(item.updated_at)}
-                          />
-                        </div>
                       </div>
 
-                      <div className="min-w-[320px] space-y-3">
+                      <div className="flex flex-wrap gap-3">
                         <select
-                          value={item.status || "new"}
+                          value={selected.status || "new"}
                           onChange={(e) =>
-                            updateRFQField(item.id, "status", e.target.value)
+                            updateRFQ(selected.id, {
+                              status: e.target.value,
+                              pipeline_status: e.target.value,
+                            })
                           }
-                          className="w-full border rounded-xl px-4 py-3 font-bold"
+                          className="border rounded-xl px-4 py-2 bg-white font-bold"
                         >
-                          {statuses.map((status) => (
-                            <option key={status} value={status}>
-                              {status}
+                          {statusOptions.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
                             </option>
                           ))}
                         </select>
 
-                        <select
-                          value={item.priority || "normal"}
-                          onChange={(e) =>
-                            updateRFQField(item.id, "priority", e.target.value)
-                          }
-                          className="w-full border rounded-xl px-4 py-3 font-bold"
-                        >
-                          {priorities.map((p) => (
-                            <option key={p} value={p}>
-                              {p}
-                            </option>
-                          ))}
-                        </select>
-
-                        <select
-                          value={item.pipeline_status || "New"}
-                          onChange={(e) =>
-                            updateRFQField(item.id, "pipeline_status", e.target.value)
-                          }
-                          className="w-full border rounded-xl px-4 py-3 font-bold"
-                        >
-                          {pipelines.map((p) => (
-                            <option key={p} value={p}>
-                              {p}
-                            </option>
-                          ))}
-                        </select>
-
-                        <input
-                          type="date"
-                          value={item.next_follow_up || ""}
-                          onChange={(e) =>
-                            updateRFQField(item.id, "next_follow_up", e.target.value)
-                          }
-                          className="w-full border rounded-xl px-4 py-3 font-bold"
-                        />
-
-                        <input
-                          type="number"
-                          placeholder="Estimated Value USD"
-                          value={item.estimated_value || ""}
-                          onChange={(e) =>
-                            updateRFQField(
-                              item.id,
-                              "estimated_value",
-                              e.target.value || "0"
-                            )
-                          }
-                          className="w-full border rounded-xl px-4 py-3 font-bold"
-                        />
-
-                        <input
-                          placeholder="Quote Unit Price, e.g. USD 350 / pc"
-                          value={item.quote_unit_price || ""}
-                          onChange={(e) =>
-                            updateRFQField(item.id, "quote_unit_price", e.target.value)
-                          }
-                          className="w-full border rounded-xl px-4 py-3 font-bold"
-                        />
-
-                        <input
-                          placeholder="Lead Time, e.g. 3-5 working days"
-                          value={item.quote_lead_time || ""}
-                          onChange={(e) =>
-                            updateRFQField(item.id, "quote_lead_time", e.target.value)
-                          }
-                          className="w-full border rounded-xl px-4 py-3 font-bold"
-                        />
-
-                        <a
-                          href={`mailto:${item.email}?subject=${mailSubject}&body=${mailBody}`}
-                          className="block bg-blue-600 text-white text-center px-5 py-3 rounded-xl font-black"
-                        >
-                          Email Draft
-                        </a>
-
-                        <button
-                          onClick={() => sendQuote(item.id)}
-                          disabled={sendingId === item.id}
-                          className="w-full bg-purple-600 text-white text-center px-5 py-3 rounded-xl font-black disabled:bg-slate-400"
-                        >
-                          {sendingId === item.id ? "Sending..." : "Send Quote Email"}
+                        <button className="bg-blue-600 text-white px-5 py-2 rounded-xl font-black">
+                          Generate Quote
                         </button>
-
-                        {cleanPhone && (
-                          <a
-                            href={`https://wa.me/${cleanPhone}`}
-                            target="_blank"
-                            className="block bg-green-500 text-white text-center px-5 py-3 rounded-xl font-black"
-                          >
-                            WhatsApp
-                          </a>
-                        )}
-                      </div>
-                    </div>
-
-                    {item.rfq_details && (
-                      <div className="mt-6 bg-slate-50 border rounded-2xl p-5">
-                        <h3 className="font-black mb-2">RFQ Details</h3>
-                        <p className="whitespace-pre-wrap text-slate-700 leading-7">
-                          {item.rfq_details}
-                        </p>
-                      </div>
-                    )}
-
-{item.attachment_url && (
-  <div className="mt-4 border rounded-xl p-4 bg-blue-50">
-    <h4 className="font-black mb-3">
-      RFQ Attachment
-    </h4>
-
-    <AttachmentLink
-      url={item.attachment_url}
-      name={item.attachment_name}
-    />
-
-    <div className="text-xs text-slate-500 mt-2">
-      {item.attachment_type}
-    </div>
-  </div>
-)}
-                    <div className="mt-6 grid md:grid-cols-2 gap-5">
-                      <div className="bg-yellow-50 border rounded-2xl p-5">
-                        <h3 className="font-black mb-2">Internal Notes</h3>
-                        <textarea
-                          defaultValue={item.internal_notes || ""}
-                          onBlur={(e) =>
-                            updateRFQField(item.id, "internal_notes", e.target.value)
-                          }
-                          placeholder="Private CRM notes..."
-                          rows={5}
-                          className="w-full border rounded-2xl p-4 bg-white"
-                        />
-                      </div>
-
-                      <div className="bg-blue-50 border rounded-2xl p-5">
-                        <h3 className="font-black mb-2">Quote Notes</h3>
-                        <textarea
-                          defaultValue={item.quote_notes || ""}
-                          onBlur={(e) =>
-                            updateRFQField(item.id, "quote_notes", e.target.value)
-                          }
-                          placeholder="Quotation notes for customer email..."
-                          rows={5}
-                          className="w-full border rounded-2xl p-4 bg-white"
-                        />
                       </div>
                     </div>
                   </div>
-                );
-              })}
 
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-8 space-y-6">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-white rounded-2xl border p-5">
+                          <div className="text-sm text-slate-500">Part Number</div>
+                          <div className="font-black mt-1 break-all">
+                            {selected.part_number || "-"}
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-2xl border p-5">
+                          <div className="text-sm text-slate-500">Brand</div>
+                          <div className="font-black mt-1">{selected.brand || "-"}</div>
+                        </div>
+                        <div className="bg-white rounded-2xl border p-5">
+                          <div className="text-sm text-slate-500">Quantity</div>
+                          <div className="font-black mt-1">{selected.quantity || "-"}</div>
+                        </div>
+                        <div className="bg-white rounded-2xl border p-5">
+                          <div className="text-sm text-slate-500">Received</div>
+                          <div className="font-black mt-1 text-sm">
+                            {formatDate(selected.created_at)}
+                          </div>
+                        </div>
+                      </div>
 
-              {filtered.length === 0 && (
-                <div className="bg-white border rounded-3xl p-10 text-center">
-                  <h2 className="text-3xl font-black mb-2">
-                    No RFQ Requests Found
-                  </h2>
-                  <p className="text-slate-600">
-                    New RFQ submissions will appear here.
-                  </p>
+                      <div className="bg-white rounded-3xl border shadow-sm p-6">
+                        <h3 className="font-black text-xl mb-4">RFQ Details</h3>
+                        <div className="rounded-2xl bg-slate-50 border p-5 whitespace-pre-wrap min-h-32">
+                          {selected.rfq_details || "No RFQ details."}
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-3xl border shadow-sm p-6">
+                        <h3 className="font-black text-xl mb-4">RFQ Workflow</h3>
+                        <div className="grid grid-cols-5 gap-3">
+                          {["New", "Sourcing", "Quoted", "Won", "Lost"].map((step) => {
+                            const active =
+                              (selected.status || "new").toLowerCase() ===
+                              step.toLowerCase();
+
+                            return (
+                              <div
+                                key={step}
+                                className={`rounded-2xl border p-4 text-center ${
+                                  active
+                                    ? "bg-blue-600 text-white border-blue-600"
+                                    : "bg-slate-50"
+                                }`}
+                              >
+                                <div className="text-2xl mb-1">
+                                  {step === "New"
+                                    ? "📥"
+                                    : step === "Sourcing"
+                                    ? "🔍"
+                                    : step === "Quoted"
+                                    ? "🧾"
+                                    : step === "Won"
+                                    ? "✅"
+                                    : "❌"}
+                                </div>
+                                <div className="font-black text-sm">{step}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-3xl border shadow-sm p-6">
+  <h3 className="font-black text-xl mb-4">Quick Actions</h3>
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    
+    {/* 单个 PDF */}
+    <button
+      onClick={() => generateSinglePDF(selected)}
+      className="rounded-2xl border p-4 text-left hover:bg-blue-50"
+    >
+      <div className="text-2xl">📄</div>
+      <div className="font-black mt-2">Single PDF</div>
+      <div className="text-xs text-slate-500">Current RFQ</div>
+    </button>
+
+    {/* 批量 PDF */}
+    <button
+      onClick={generateBatchPDF}
+      className="rounded-2xl border p-4 text-left hover:bg-green-50"
+    >
+      <div className="text-2xl">📄</div>
+      <div className="font-black mt-2">Batch PDF</div>
+      <div className="text-xs text-slate-500">All RFQs</div>
+    </button>
+
+    {/* 批量邮件 */}
+    <button
+      onClick={sendBatchEmails}
+      className="rounded-2xl border p-4 text-left hover:bg-orange-50"
+    >
+      <div className="text-2xl">📧</div>
+      <div className="font-black mt-2">Batch Email</div>
+      <div className="text-xs text-slate-500">Coming next</div>
+    </button>
+
+    {/* 批量 Excel */}
+    <button
+      onClick={exportBatchExcel}
+      className="rounded-2xl border p-4 text-left hover:bg-purple-50"
+    >
+      <div className="text-2xl">📊</div>
+      <div className="font-black mt-2">Export Excel</div>
+      <div className="text-xs text-slate-500">Download all RFQs</div>
+    </button>
+
+    {/* 刷新数据 */}
+    <button
+      onClick={loadRFQs}
+      className="rounded-2xl border p-4 text-left hover:bg-slate-50"
+    >
+      <div className="text-2xl">🔄</div>
+      <div className="font-black mt-2">Refresh</div>
+      <div className="text-xs text-slate-500">Reload data</div>
+    </button>
+
+  </div>
+</div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-yellow-50 rounded-3xl border border-yellow-200 p-6">
+                          <h3 className="font-black mb-3">Internal Notes</h3>
+                          <textarea
+                            defaultValue={selected.internal_notes || ""}
+                            placeholder="Private CRM notes..."
+                            className="w-full h-32 border rounded-2xl p-4"
+                            onBlur={(e) =>
+                              updateRFQ(selected.id, {
+                                internal_notes: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+
+                        <div className="bg-blue-50 rounded-3xl border border-blue-200 p-6">
+                          <h3 className="font-black mb-3">Quote Notes</h3>
+                          <textarea
+                            defaultValue={selected.quote_notes || ""}
+                            placeholder="Quotation notes for customer email..."
+                            className="w-full h-32 border rounded-2xl p-4"
+                            onBlur={(e) =>
+                              updateRFQ(selected.id, {
+                                quote_notes: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-4 space-y-6">
+                      <div className="bg-white rounded-3xl border shadow-sm p-6">
+                        <h3 className="font-black text-xl mb-5">
+                          Customer & RFQ Details
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-5 text-sm">
+                          <Info label="Company" value={selected.company_name} />
+                          <Info label="Priority" value={selected.priority || "normal"} />
+                          <Info label="Contact" value={selected.contact_name} />
+                          <Info label="Target Price" value={String(selected.estimated_value || "-")} />
+                          <Info label="Email" value={selected.email} />
+                          <Info label="Lead Time" value={selected.target_delivery_date} />
+                          <Info label="Phone" value={selected.phone} />
+                          <Info label="Condition" value={selected.condition_required} />
+                          <Info label="Country" value={selected.country} />
+                          <Info label="Created" value={formatDate(selected.created_at)} />
+                        </div>
+
+                        <div className="mt-5">
+                          <label className="text-xs font-black text-slate-500">
+                            Priority
+                          </label>
+                          <select
+                            value={selected.priority || "normal"}
+                            onChange={(e) =>
+                              updateRFQ(selected.id, { priority: e.target.value })
+                            }
+                            className="w-full mt-1 border rounded-xl px-3 py-2"
+                          >
+                            {priorityOptions.map((p) => (
+                              <option key={p} value={p}>
+                                {p}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="mt-4">
+                          <label className="text-xs font-black text-slate-500">
+                            Quote Status
+                          </label>
+                          <select
+                            value={selected.quote_status || "Draft"}
+                            onChange={(e) =>
+                              updateRFQ(selected.id, {
+                                quote_status: e.target.value,
+                              })
+                            }
+                            className="w-full mt-1 border rounded-xl px-3 py-2"
+                          >
+                            {quoteStatusOptions.map((p) => (
+                              <option key={p} value={p}>
+                                {p}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="mt-4">
+                          <label className="text-xs font-black text-slate-500">
+                            Follow-up Date
+                          </label>
+                          <input
+                            type="date"
+                            defaultValue={selected.follow_up_date || ""}
+                            onBlur={(e) =>
+                              updateRFQ(selected.id, {
+                                follow_up_date: e.target.value,
+                              })
+                            }
+                            className="w-full mt-1 border rounded-xl px-3 py-2"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-3xl border shadow-sm p-6">
+                        <h3 className="font-black text-xl mb-4">Attachments</h3>
+
+                        {selected.attachment_url ? (
+                          <a
+                            href={selected.attachment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-xl text-sm font-black"
+                          >
+                            📎 {selected.attachment_name || "Download Attachment"}
+                          </a>
+                        ) : (
+                          <div className="text-sm text-slate-500">
+                            No attachment uploaded.
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="bg-white rounded-3xl border shadow-sm p-6">
+                        <h3 className="font-black text-xl mb-4">Timeline</h3>
+
+                        <div className="space-y-5">
+                          <Timeline
+                            title="RFQ Created"
+                            desc="Website RFQ submission"
+                            time={formatDate(selected.created_at)}
+                          />
+                          <Timeline
+                            title={`Status: ${selected.status || "new"}`}
+                            desc="Current pipeline status"
+                            time={formatDate(selected.created_at)}
+                          />
+                          {selected.follow_up_date && (
+                            <Timeline
+                              title="Follow-up Reminder"
+                              desc={selected.follow_up_date}
+                              time="Scheduled"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {saving && (
+  <div className="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl font-black">
+    Saving...
+  </div>
+)}
                 </div>
               )}
             </div>
-          </>
-        )}
+          </div>
+        </section>
       </div>
     </main>
   );
 }
 
-function Stat({ title, value }: { title: string; value: number | string }) {
+function Info({ label, value }: { label: string; value?: string }) {
   return (
-    <div className="bg-white border rounded-3xl p-6">
-      <p className="text-slate-500 mb-2">{title}</p>
-      <p className="text-4xl font-black">{value}</p>
+    <div>
+      <div className="text-xs text-slate-500 font-bold">{label}</div>
+      <div className="font-black break-all">{value || "-"}</div>
     </div>
   );
 }
 
-function Badge({
-  text,
-  type,
+function Timeline({
+  title,
+  desc,
+  time,
 }: {
-  text: string;
-  type?: "status" | "priority" | "pipeline" | "quote";
+  title: string;
+  desc: string;
+  time: string;
 }) {
-  const t = text.toLowerCase();
-
-  let color = "bg-slate-100 text-slate-800 border-slate-200";
-
-  if (type === "priority") {
-    if (t === "vip") color = "bg-purple-100 text-purple-700 border-purple-200";
-    if (t === "high") color = "bg-orange-100 text-orange-700 border-orange-200";
-    if (t === "normal") color = "bg-blue-100 text-blue-700 border-blue-200";
-  }
-
-  if (type === "status" || type === "pipeline") {
-    if (t === "won") color = "bg-green-100 text-green-700 border-green-200";
-    if (t === "lost") color = "bg-red-100 text-red-700 border-red-200";
-    if (t === "quoted") color = "bg-yellow-100 text-yellow-700 border-yellow-200";
-    if (t === "contacted") color = "bg-blue-100 text-blue-700 border-blue-200";
-    if (t === "new") color = "bg-slate-100 text-slate-800 border-slate-200";
-  }
-
-  if (type === "quote") {
-    if (t === "sent") color = "bg-green-100 text-green-700 border-green-200";
-    if (t === "draft") color = "bg-slate-100 text-slate-700 border-slate-200";
-  }
-
   return (
-    <span className={`${color} border px-4 py-2 rounded-full text-sm font-black`}>
-      {text}
-    </span>
-  );
-}
-
-function InfoLine({ label, value }: { label: string; value?: string }) {
-  return (
-    <div className="border rounded-xl p-3">
-      <p className="text-slate-500 text-xs mb-1">{label}</p>
-      <p className="font-black break-all">{value || "-"}</p>
+    <div className="flex gap-3">
+      <div className="w-3 h-3 rounded-full bg-blue-600 mt-1.5" />
+      <div className="flex-1">
+        <div className="font-black">{title}</div>
+        <div className="text-sm text-slate-500">{desc}</div>
+        <div className="text-xs text-slate-400 mt-1">{time}</div>
+      </div>
     </div>
-  );
-}
-
-function formatDate(date?: string) {
-  if (!date) return "-";
-  return new Date(date).toLocaleString();
-}
-
-function AttachmentLink({
-  url,
-  name,
-}: {
-  url?: string;
-  name?: string;
-}) {
-  if (!url) return null;
-
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-black"
-    >
-      📎 {name || "Download Attachment"}
-    </a>
   );
 }

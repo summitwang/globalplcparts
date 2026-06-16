@@ -126,12 +126,18 @@ return (
         <div className="bg-white border rounded-3xl shadow-sm p-8">
           <div className="aspect-square bg-slate-100 rounded-2xl border flex items-center justify-center overflow-hidden">
             {product.image ? (
-              <img
-                src={product.image}
-                alt={`${product.brand} ${product.model}`}
-                className="w-full h-full object-contain p-8"
-              />
-            ) : (
+  <div className="w-full h-full flex flex-col items-center justify-center">
+    <img
+      src={product.image}
+      alt={`${product.brand} ${product.model}`}
+      className="max-w-full max-h-full object-contain p-8"
+    />
+
+    <p className="text-xs text-red-600 break-all mt-3">
+      Image path: {product.image}
+    </p>
+  </div>
+) : (
               <div className="text-center">
                 <div className="text-6xl font-black text-blue-600 mb-4">
                   PLC
