@@ -30,7 +30,18 @@
     "clean-products-v141": "node scripts/clean-product-models-v141.js",
     "expand-products-v15": "node scripts/product-expansion-v15.js",
     "clean-v15-dirty": "node scripts/clean-v15-dirty-products.js",
-    "expand-products-v16": "node scripts/product-expansion-v16.js"
+    "expand-products-v16": "node scripts/product-expansion-v16.js",
+    "expand-products-v17": "node scripts/product-expansion-v17.js",
+    "test-image-v18": "node scripts/test-product-image-v18.js" ,
+    "expand-products-v17-clean": "node scripts/product-expansion-v17-clean.js",
+    "expand-products-v18": "node scripts/product-expansion-v18.js",
+    "check-images": "node scripts/check-product-images.js",
+    "fix-images-v19": "node scripts/product-image-engine-v19.js",
+    "fix-images-v20": "node scripts/product-image-engine-v20.js",
+    "fix-images-v21": "node scripts/product-image-engine-v21.js",
+    "fix-images-v21-5": "node scripts/product-image-engine-v21-5.js",
+    "fix-images-v22": "node scripts/product-image-engine-v22.js"
+    
 
   },
   "dependencies": {

@@ -1,5 +1,6 @@
 import { products } from "@/data/products";
 import Link from "next/link";
+import ProductImage from "@/components/ProductImage";
 
 const whatsappNumber = "13774696836";
 
@@ -127,11 +128,12 @@ return (
           <div className="aspect-square bg-slate-100 rounded-2xl border flex items-center justify-center overflow-hidden">
             {product.image ? (
   <div className="w-full h-full flex flex-col items-center justify-center">
-    <img
-      src={product.image}
-      alt={`${product.brand} ${product.model}`}
-      className="max-w-full max-h-full object-contain p-8"
-    />
+    <ProductImage
+    src={product.image}
+    brand={product.brand}
+    model={product.model}
+    className="max-w-full max-h-full object-contain p-8"
+/>
 
     <p className="text-xs text-red-600 break-all mt-3">
       Image path: {product.image}

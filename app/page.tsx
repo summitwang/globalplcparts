@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { products } from "@/data/products";
+import ProductImage from "@/components/ProductImage";
 
 const whatsappNumber = "13774696836";
 
@@ -285,9 +286,10 @@ export default function HomePage() {
             >
               <div className="h-48 bg-slate-100 border-b flex items-center justify-center">
                 {product.image ? (
-                  <img
-                    src={product.image}
-                    alt={`${product.brand} ${product.model}`}
+                  <ProductImage
+    src={product.image}
+    brand={product.brand}
+    model={product.model}
                     className="w-full h-full object-contain p-5"
                   />
                 ) : (

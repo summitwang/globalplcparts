@@ -1,0 +1,11 @@
+{
+  "stats": {
+    "total": 5288,
+    "realLocal": 5216,
+    "svgFallback": 72,
+    "remote": 0,
+    "missing": 0,
+    "badPath": 0
+  },
+  "missing": []
+}

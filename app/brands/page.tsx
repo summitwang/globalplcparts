@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { products } from "@/data/products";
+import ProductImage from "@/components/ProductImage";
 
 export const metadata = {
   title: "Industrial Automation Brands | GlobalPLCParts",

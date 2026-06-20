@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { products } from "@/data/products";
+import ProductImage from "@/components/ProductImage";
 
 export const metadata = {
   title: "Search Industrial Automation Parts | GlobalPLCParts",
@@ -121,9 +122,10 @@ export default async function SearchPage({
               >
                 <div className="h-48 bg-slate-100 border-b flex items-center justify-center">
                   {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={`${product.brand} ${product.model}`}
+                    <ProductImage
+    src={product.image}
+    brand={product.brand}
+    model={product.model}
                       className="w-full h-full object-contain p-5"
                     />
                   ) : (
