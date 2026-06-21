@@ -8,16 +8,40 @@ export const metadata = {
     "Search PLC, DCS, HMI, controller, module and industrial automation spare parts by model number, brand or category.",
 };
 
+const PAGE_SIZE = 24;
+const whatsappNumber = "13774696836";
+const whatsappLink = `https://wa.me/${whatsappNumber}`;
+
+function getPageNumbers(currentPage: number, totalPages: number) {
+  const pages: number[] = [];
+  for (
+    let i = Math.max(1, currentPage - 2);
+    i <= Math.min(totalPages, currentPage + 2);
+    i++
+  ) {
+    pages.push(i);
+  }
+  return pages;
+}
+
+function pageHref(q: string, page: number) {
+  const params = new URLSearchParams();
+  if (q.trim()) params.set("q", q.trim());
+  if (page > 1) params.set("page", String(page));
+  return `/search?${params.toString()}`;
+}
+
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  const { q = "" } = await searchParams;
+  const { q = "", page = "1" } = await searchParams;
 
   const keyword = q.trim().toLowerCase();
+  const currentPage = Math.max(1, Number(page) || 1);
 
-  const results = keyword
+  const allResults = keyword
     ? products.filter((product) => {
         const text = [
           product.brand,
@@ -30,12 +54,15 @@ export default async function SearchPage({
 
         return text.includes(keyword);
       })
-    : products.slice(0, 24);
+    : products;
+
+  const totalPages = Math.max(1, Math.ceil(allResults.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const start = (safePage - 1) * PAGE_SIZE;
+  const results = allResults.slice(start, start + PAGE_SIZE);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      
-
       <section className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-6 text-sm text-slate-500">
           <Link href="/" className="hover:text-blue-600">
@@ -84,7 +111,7 @@ export default async function SearchPage({
             </h2>
 
             <p className="text-slate-600">
-              Showing {results.length} matching products.
+              Showing page {safePage} of {totalPages} · {allResults.length} matching products.
             </p>
           </div>
 
@@ -96,7 +123,7 @@ export default async function SearchPage({
           </Link>
         </div>
 
-        {results.length === 0 ? (
+        {allResults.length === 0 ? (
           <div className="bg-white border rounded-3xl p-10">
             <h3 className="text-3xl font-black mb-4">No products found</h3>
 
@@ -113,55 +140,107 @@ export default async function SearchPage({
             </Link>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {results.map((product) => (
-              <Link
-                key={product.slug}
-                href={`/products/${product.slug}`}
-                className="bg-white border rounded-3xl overflow-hidden hover:shadow-lg transition"
-              >
-                <div className="h-48 bg-slate-100 border-b flex items-center justify-center">
-                  {product.image ? (
+          <>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {results.map((product, index) => (
+                <Link
+                  key={`${product.slug}-${safePage}-${index}`}
+                  href={`/products/${product.slug}`}
+                  className="bg-white border rounded-3xl overflow-hidden hover:shadow-lg transition"
+                >
+                  <div className="h-48 bg-slate-100 border-b flex items-center justify-center">
                     <ProductImage
-    src={product.image}
-    brand={product.brand}
-    model={product.model}
+                      src={product.image}
+                      brand={product.brand}
+                      model={product.model}
                       className="w-full h-full object-contain p-5"
                     />
-                  ) : (
-                    <div className="text-center">
-                      <div className="text-4xl font-black text-blue-600">
-                        PLC
-                      </div>
-                      <p className="text-slate-400 text-sm mt-2">
-                        Product Image
-                      </p>
-                    </div>
-                  )}
-                </div>
+                  </div>
 
-                <div className="p-6">
-                  <p className="text-blue-600 font-black text-sm mb-2">
-                    {product.brand}
-                  </p>
+                  <div className="p-6">
+                    <p className="text-blue-600 font-black text-sm mb-2">
+                      {product.brand}
+                    </p>
 
-                  <h3 className="text-xl font-black mb-3">
-                    {product.model}
-                  </h3>
+                    <h3 className="text-xl font-black mb-3 line-clamp-2">
+                      {product.model}
+                    </h3>
 
-                  <p className="text-slate-500 text-sm mb-5">
-                    {product.category}
-                  </p>
+                    <p className="text-slate-500 text-sm mb-5">
+                      {product.category}
+                    </p>
 
-                  <span className="inline-block bg-blue-600 text-white px-5 py-3 rounded-xl font-black text-sm">
-                    View Details
-                  </span>
-                </div>
+                    <span className="inline-block bg-blue-600 text-white px-5 py-3 rounded-xl font-black text-sm">
+                      View Details
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-12 flex flex-wrap justify-center gap-2">
+              <Link
+                href={pageHref(q, 1)}
+                className={`px-4 py-2 border rounded-lg bg-white ${
+                  safePage === 1 ? "pointer-events-none opacity-40" : ""
+                }`}
+              >
+                First
               </Link>
-            ))}
-          </div>
+
+              <Link
+                href={pageHref(q, safePage - 1)}
+                className={`px-4 py-2 border rounded-lg bg-white ${
+                  safePage === 1 ? "pointer-events-none opacity-40" : ""
+                }`}
+              >
+                Prev
+              </Link>
+
+              {getPageNumbers(safePage, totalPages).map((p) => (
+                <Link
+                  key={p}
+                  href={pageHref(q, p)}
+                  className={`px-4 py-2 border rounded-lg font-bold ${
+                    p === safePage
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white"
+                  }`}
+                >
+                  {p}
+                </Link>
+              ))}
+
+              <Link
+                href={pageHref(q, safePage + 1)}
+                className={`px-4 py-2 border rounded-lg bg-white ${
+                  safePage === totalPages ? "pointer-events-none opacity-40" : ""
+                }`}
+              >
+                Next
+              </Link>
+
+              <Link
+                href={pageHref(q, totalPages)}
+                className={`px-4 py-2 border rounded-lg bg-white ${
+                  safePage === totalPages ? "pointer-events-none opacity-40" : ""
+                }`}
+              >
+                Last
+              </Link>
+            </div>
+          </>
         )}
       </section>
+
+      <a
+        href={whatsappLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed right-6 bottom-6 z-50 bg-green-500 hover:bg-green-600 text-white px-5 py-4 rounded-full shadow-lg font-bold"
+      >
+        WhatsApp
+      </a>
     </main>
   );
 }
