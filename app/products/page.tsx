@@ -1,54 +1,62 @@
 "use client";
 
-import ProductImage from "@/components/ProductImage";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { products } from "@/data/products";
+import ProductImage from "@/components/ProductImage";
 
 const whatsappNumber = "13774696836";
 const whatsappLink = `https://wa.me/${whatsappNumber}`;
-
-function getFallbackImage(brand: string) {
-  const map: Record<string, string> = {
-    ABB: "/product-images/abb.svg",
-    "Allen Bradley": "/product-images/allen-bradley.svg",
-    Siemens: "/product-images/siemens.svg",
-    Schneider: "/product-images/schneider.svg",
-    Omron: "/product-images/omron.svg",
-    Mitsubishi: "/product-images/mitsubishi.svg",
-    Honeywell: "/product-images/honeywell.svg",
-    Yokogawa: "/product-images/yokogawa.svg",
-    Emerson: "/product-images/emerson.svg",
-    "GE Fanuc": "/product-images/ge-fanuc.svg",
-    "Bently Nevada": "/product-images/bently-nevada.svg",
-    Foxboro: "/product-images/foxboro.svg",
-    HIMA: "/product-images/hima.svg",
-    Bachmann: "/product-images/bachmann.svg",
-    Rexroth: "/product-images/rexroth.svg",
-    ProSoft: "/product-images/prosoft.svg",
-    Woodward: "/product-images/woodward.svg",
-  };
-
-  return map[brand] || "/product-images/default.svg";
-}
-
-function shortText(text: string | undefined, fallback: string) {
-  const value = String(text || fallback);
-  return value.length > 160 ? value.slice(0, 160) + "..." : value;
-}
+const PAGE_SIZE = 24;
 
 const brands = [
   "All",
   ...Array.from(new Set(products.map((p) => p.brand).filter(Boolean))),
 ];
 
+function shortText(text: string | undefined, fallback: string) {
+  const value = String(text || fallback);
+  return value.length > 150 ? value.slice(0, 150) + "..." : value;
+}
+
+function makeSlug(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function getPageNumbers(currentPage: number, totalPages: number) {
+  const pages: number[] = [];
+  const start = Math.max(1, currentPage - 2);
+  const end = Math.min(totalPages, currentPage + 2);
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+
+  return pages;
+}
+
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [brand, setBrand] = useState("All");
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlPage = Number(params.get("page") || 1);
+    const urlBrand = params.get("brand") || "All";
+    const urlSearch = params.get("search") || "";
+
+    if (urlPage > 0) setPage(urlPage);
+    if (urlBrand) setBrand(urlBrand);
+    if (urlSearch) setSearch(urlSearch);
+  }, []);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const keyword = search.toLowerCase().trim();
+    const keyword = search.toLowerCase().trim();
 
+    return products.filter((product) => {
       const matchSearch =
         !keyword ||
         String(product.model || "").toLowerCase().includes(keyword) ||
@@ -61,6 +69,46 @@ export default function ProductsPage() {
       return matchSearch && matchBrand;
     });
   }, [search, brand]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const safePage = Math.min(Math.max(page, 1), totalPages);
+
+  const pagedProducts = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filteredProducts.slice(start, start + PAGE_SIZE);
+  }, [filteredProducts, safePage]);
+
+  function updateUrl(nextPage: number, nextBrand = brand, nextSearch = search) {
+    const params = new URLSearchParams();
+
+    if (nextPage > 1) params.set("page", String(nextPage));
+    if (nextBrand !== "All") params.set("brand", nextBrand);
+    if (nextSearch.trim()) params.set("search", nextSearch.trim());
+
+    const query = params.toString();
+    const nextUrl = query ? `/products?${query}` : "/products";
+
+    window.history.pushState({}, "", nextUrl);
+  }
+
+  function goToPage(nextPage: number) {
+    const target = Math.min(Math.max(nextPage, 1), totalPages);
+    setPage(target);
+    updateUrl(target);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleSearch(value: string) {
+    setSearch(value);
+    setPage(1);
+    updateUrl(1, brand, value);
+  }
+
+  function handleBrand(value: string) {
+    setBrand(value);
+    setPage(1);
+    updateUrl(1, value, search);
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -86,14 +134,14 @@ export default function ProductsPage() {
           <div className="grid md:grid-cols-3 gap-4">
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               placeholder="Search model, brand, category..."
               className="md:col-span-2 border rounded-xl px-4 py-4 w-full"
             />
 
             <select
               value={brand}
-              onChange={(e) => setBrand(e.target.value)}
+              onChange={(e) => handleBrand(e.target.value)}
               className="border rounded-xl px-4 py-4 w-full"
             >
               {brands.map((item) => (
@@ -105,7 +153,7 @@ export default function ProductsPage() {
           </div>
 
           <div className="mt-4 text-slate-500 text-sm">
-            Showing {filteredProducts.length} products
+            Showing page {safePage} of {totalPages} · {filteredProducts.length} products found
           </div>
         </div>
 
@@ -121,27 +169,25 @@ export default function ProductsPage() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProducts.map((product, index) => {
+          {pagedProducts.map((product, index) => {
             const brandName = String(product.brand || "Industrial");
             const model = String(product.model || "Automation Part");
             const category = String(product.category || "PLC Module");
             const slug =
               product.slug ||
-              `${brandName}-${model}-${index}`
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-");
+              makeSlug(`${brandName}-${model}-${safePage}-${index}`);
 
             return (
               <div
-                key={`${slug}-${index}`}
+                key={`${slug}-${safePage}-${index}`}
                 className="bg-white border rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden"
               >
                 <div className="h-56 bg-slate-100 border-b flex items-center justify-center">
                   <ProductImage
-    src={product.image}
-    brand={product.brand}
-    model={product.model}
-/>
+                    src={product.image}
+                    brand={brandName}
+                    model={model}
+                  />
                 </div>
 
                 <div className="p-6">
@@ -182,6 +228,56 @@ export default function ProductsPage() {
             );
           })}
         </div>
+
+        {filteredProducts.length > 0 && (
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
+            <button
+              onClick={() => goToPage(1)}
+              disabled={safePage === 1}
+              className="px-4 py-2 rounded-lg border bg-white disabled:opacity-40"
+            >
+              First
+            </button>
+
+            <button
+              onClick={() => goToPage(safePage - 1)}
+              disabled={safePage === 1}
+              className="px-4 py-2 rounded-lg border bg-white disabled:opacity-40"
+            >
+              Prev
+            </button>
+
+            {getPageNumbers(safePage, totalPages).map((p) => (
+              <button
+                key={p}
+                onClick={() => goToPage(p)}
+                className={`px-4 py-2 rounded-lg border font-bold ${
+                  p === safePage
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+
+            <button
+              onClick={() => goToPage(safePage + 1)}
+              disabled={safePage === totalPages}
+              className="px-4 py-2 rounded-lg border bg-white disabled:opacity-40"
+            >
+              Next
+            </button>
+
+            <button
+              onClick={() => goToPage(totalPages)}
+              disabled={safePage === totalPages}
+              className="px-4 py-2 rounded-lg border bg-white disabled:opacity-40"
+            >
+              Last
+            </button>
+          </div>
+        )}
 
         {filteredProducts.length === 0 && (
           <div className="bg-white border rounded-2xl p-10 text-center mt-8">
