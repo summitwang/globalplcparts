@@ -28,18 +28,35 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_ID}');
-          `}
-        </Script>
+
+  {/* Google Analytics */}
+  <Script
+    src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+    strategy="afterInteractive"
+  />
+
+  <Script id="google-analytics" strategy="afterInteractive">
+    {`
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${GA_ID}');
+    `}
+  </Script>
+
+  {/* Microsoft Clarity */}
+  <Script id="microsoft-clarity" strategy="afterInteractive">
+    {`
+      (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);
+          t.async=1;
+          t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];
+          y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "xdhlm575ql");
+    `}
+  </Script>
 
         <div className="bg-slate-900 text-white text-sm">
           <div className="max-w-7xl mx-auto px-6 py-2 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
