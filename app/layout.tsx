@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Script from "next/script";
 import "./globals.css";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
+import { Suspense } from "react";
 
 const email = "sales@globalplcparts.com";
 const whatsappNumber = "8613774696836";
@@ -126,6 +128,9 @@ export default function RootLayout({
         </header>
 
         {children}
+        <Suspense fallback={null}>
+  <AnalyticsTracker />
+</Suspense>
       </body>
     </html>
   );
