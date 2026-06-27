@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Script from "next/script";
 import "./globals.css";
 
 const email = "sales@globalplcparts.com";
 const whatsappNumber = "8613774696836";
+const GA_ID = "G-LPS04SZVX7";
 
 export const metadata: Metadata = {
   title: "GlobalPLCParts | Industrial Automation Parts Supplier",
   description:
     "GlobalPLCParts supplies PLC, DCS, HMI, controller and industrial automation spare parts worldwide.",
-verification: {
-  google: "4F3xpyojabevBgIuU9zHRqhyIOCCNFBYEOh4i82K1S0",
-},
-  };
+  verification: {
+    google: "4F3xpyojabevBgIuU9zHRqhyIOCCNFBYEOh4i82K1S0",
+  },
+};
 
 export default function RootLayout({
   children,
@@ -26,6 +28,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+        </Script>
+
         <div className="bg-slate-900 text-white text-sm">
           <div className="max-w-7xl mx-auto px-6 py-2 flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
             <div className="flex flex-wrap gap-4">
