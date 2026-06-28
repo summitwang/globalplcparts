@@ -92,13 +92,13 @@ export default function RootLayout({
           <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col xl:flex-row gap-4 xl:items-center xl:justify-between">
             <Link href="/" className="flex items-center">
               <Image
-                src="/brand/logo-main.png"
-                alt="GlobalPLCParts"
-                width={260}
-                height={86}
-                priority
-                className="h-14 w-auto object-contain"
-              />
+  src="/brand/logo-main.png"
+  alt="GlobalPLCParts"
+  width={420}
+  height={140}
+  priority
+  className="h-20 w-auto object-contain"
+/>
             </Link>
 
             <form action="/search" className="flex-1 max-w-2xl flex gap-2">
@@ -139,6 +139,19 @@ export default function RootLayout({
             </nav>
           </div>
         </header>
+
+<nav className="bg-blue-700 text-white border-b border-blue-800">
+  <div className="max-w-7xl mx-auto px-6 py-3 flex flex-wrap gap-6 text-sm font-black">
+    <Link href="/products">All Categories</Link>
+    <Link href="/brands">Brands</Link>
+    <Link href="/search?q=PLC">PLC</Link>
+    <Link href="/search?q=HMI">HMI</Link>
+    <Link href="/search?q=Servo">Servo Drives</Link>
+    <Link href="/search?q=DCS">DCS Systems</Link>
+    <Link href="/blog">Industries</Link>
+    <Link href="/request-quote">Contact</Link>
+  </div>
+</nav>
 
         {children}
 
