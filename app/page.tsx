@@ -5,13 +5,13 @@ import ProductImage from "@/components/ProductImage";
 const whatsappNumber = "13774696836";
 
 export const metadata = {
-  title: "GlobalPLCParts | PLC, DCS, HMI Industrial Automation Parts Supplier",
+  title: "GlobalPLCParts | Industrial Automation Parts Supplier",
   description:
-    "Search and request quotes for PLC, DCS, HMI, controllers, modules and industrial automation spare parts from GlobalPLCParts.",
+    "Search PLC, DCS, HMI, controllers, modules and industrial automation spare parts. Fast RFQ support worldwide.",
 };
 
 export default function HomePage() {
-  const featuredProducts = products.slice(0, 12);
+  const featuredProducts = products.slice(0, 8);
 
   const brands = Array.from(
     new Map(
@@ -36,31 +36,36 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6 py-20 grid lg:grid-cols-12 gap-12 items-center">
+      <section className="relative overflow-hidden bg-slate-950 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.35),transparent_35%),linear-gradient(135deg,#020617,#0f172a)]" />
+
+        <div className="relative max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-12 gap-14 items-center">
           <div className="lg:col-span-7">
-            <p className="text-blue-600 font-black mb-4">
-              Global Industrial Automation Parts Supplier
+            <p className="text-blue-300 font-black mb-5 tracking-wide">
+              WORLDWIDE INDUSTRIAL AUTOMATION PARTS SUPPLIER
             </p>
 
-            <h1 className="text-6xl lg:text-7xl font-black leading-tight mb-6">
-              Search PLC, DCS, HMI & Industrial Spare Parts
+            <h1 className="text-5xl lg:text-7xl font-black leading-tight mb-6">
+              PLC, DCS, HMI & Control System Spare Parts
             </h1>
 
-            <p className="text-xl text-slate-600 leading-8 max-w-3xl mb-8">
-              GlobalPLCParts supplies PLC modules, DCS parts, HMI panels,
-              controllers, I/O modules, drives, sensors and hard-to-find
-              industrial automation spare parts worldwide.
+            <p className="text-xl text-slate-300 leading-8 max-w-3xl mb-8">
+              GlobalPLCParts helps industrial buyers source automation spare
+              parts, obsolete modules, controllers, I/O cards, drives and HMI
+              panels with fast RFQ support.
             </p>
 
-            <form action="/search" className="bg-slate-50 border rounded-3xl p-4 flex flex-col md:flex-row gap-3 mb-8">
+            <form
+              action="/search"
+              className="bg-white rounded-2xl p-3 flex flex-col md:flex-row gap-3 mb-8 shadow-2xl"
+            >
               <input
                 name="q"
-                placeholder="Enter model number: 6ES7315, 1756-EN2T, CC-PCNT02..."
-                className="flex-1 bg-white border rounded-2xl px-5 py-4 outline-none focus:border-blue-600"
+                placeholder="Search part number: 1756-L71, 6ES7315, IC693CPU..."
+                className="flex-1 text-slate-900 border rounded-xl px-5 py-4 outline-none focus:border-blue-600"
               />
 
-              <button className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black">
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-black">
                 Search Parts
               </button>
             </form>
@@ -68,37 +73,38 @@ export default function HomePage() {
             <div className="flex flex-wrap gap-4 mb-10">
               <Link
                 href="/products"
-                className="bg-blue-600 text-white px-8 py-4 rounded-xl font-black"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-black"
               >
                 Browse Products
               </Link>
 
               <Link
                 href="/request-quote"
-                className="bg-white border px-8 py-4 rounded-xl font-black"
+                className="bg-white text-slate-900 px-8 py-4 rounded-xl font-black"
               >
-                Request a Quote
+                Request Quote
               </Link>
 
               <a
                 href={`https://wa.me/${whatsappNumber}?text=${whatsappText}`}
                 target="_blank"
-                className="bg-green-500 text-white px-8 py-4 rounded-xl font-black"
+                rel="noopener noreferrer"
+                className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-black"
               >
                 WhatsApp RFQ
               </a>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Stat value="24H" label="Fast RFQ Reply" />
+              <Stat value="24H" label="RFQ Response" />
               <Stat value={`${products.length}+`} label="Product Models" />
-              <Stat value={`${brands.length}+`} label="Brands" />
+              <Stat value="17+" label="Major Brands" />
               <Stat value="Global" label="Shipping Support" />
             </div>
           </div>
 
           <div className="lg:col-span-5">
-            <div className="bg-slate-900 text-white rounded-3xl p-8 shadow-2xl">
+            <div className="bg-white/10 backdrop-blur border border-white/10 rounded-3xl p-8 shadow-2xl">
               <h2 className="text-4xl font-black mb-6">
                 Send Model Number, Get Fast Quote
               </h2>
@@ -106,21 +112,21 @@ export default function HomePage() {
               <div className="space-y-4 mb-8">
                 <HeroCard
                   title="1. Send Exact Part Number"
-                  text="Send model number, quantity and destination country."
+                  text="Provide model number, brand, quantity and destination country."
                 />
                 <HeroCard
                   title="2. Check Stock & Lead Time"
-                  text="We check price, condition, availability and shipping options."
+                  text="We check availability, condition, price and shipping options."
                 />
                 <HeroCard
-                  title="3. Worldwide Delivery"
-                  text="Support global factory maintenance and automation projects."
+                  title="3. Worldwide Supply"
+                  text="Support factory maintenance, process control and automation projects."
                 />
               </div>
 
               <Link
                 href="/request-quote"
-                className="block bg-green-500 text-center py-4 rounded-xl font-black"
+                className="block bg-green-500 hover:bg-green-600 text-center py-4 rounded-xl font-black"
               >
                 Submit RFQ Now
               </Link>
@@ -131,41 +137,21 @@ export default function HomePage() {
 
       <section className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid md:grid-cols-4 gap-5">
-          <CategoryCard
-            title="PLC Modules"
-            text="Siemens, ABB, Schneider, Omron, Mitsubishi and more."
-          />
-          <CategoryCard
-            title="DCS Parts"
-            text="Honeywell, Emerson, Yokogawa, Foxboro and process control parts."
-          />
-          <CategoryCard
-            title="HMI & Controllers"
-            text="Industrial panels, controllers, drives, CPUs and I/O modules."
-          />
-          <CategoryCard
-            title="Obsolete Parts"
-            text="Support hard-to-find and discontinued automation spare parts."
-          />
+          <CategoryCard title="PLC Modules" text="CPUs, I/O modules, racks, power supplies and communication cards." />
+          <CategoryCard title="DCS Parts" text="Honeywell, Emerson, Yokogawa, Foxboro and process control parts." />
+          <CategoryCard title="HMI & Drives" text="Panels, industrial PCs, servo drives, VFDs and controller parts." />
+          <CategoryCard title="Obsolete Parts" text="Hard-to-find and discontinued automation spare parts sourcing." />
         </div>
       </section>
 
       <section className="bg-white border-y">
         <div className="max-w-7xl mx-auto px-6 py-16">
-          <div className="flex items-end justify-between gap-6 mb-8">
-            <div>
-              <p className="text-blue-600 font-black mb-3">
-                Quick Model Search
-              </p>
-              <h2 className="text-4xl font-black">
-                Popular Industrial Part Numbers
-              </h2>
-            </div>
-
-            <Link href="/search" className="text-blue-600 font-black">
-              Search All Parts →
-            </Link>
-          </div>
+          <SectionHead
+            label="Quick Model Search"
+            title="Popular Industrial Part Numbers"
+            href="/search"
+            linkText="Search All Parts →"
+          />
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {popularModels.map((product) => (
@@ -186,20 +172,12 @@ export default function HomePage() {
       </section>
 
       <section className="max-w-7xl mx-auto px-6 py-16">
-        <div className="flex items-end justify-between gap-6 mb-8">
-          <div>
-            <p className="text-blue-600 font-black mb-3">
-              Multi-brand Supply
-            </p>
-            <h2 className="text-4xl font-black">
-              Popular Industrial Brands
-            </h2>
-          </div>
-
-          <Link href="/brands" className="text-blue-600 font-black">
-            View All Brands →
-          </Link>
-        </div>
+        <SectionHead
+          label="Multi-brand Supply"
+          title="Popular Industrial Brands"
+          href="/brands"
+          linkText="View All Brands →"
+        />
 
         <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-4">
           {brands.map((brand) => (
@@ -209,15 +187,13 @@ export default function HomePage() {
               className="bg-white border rounded-2xl p-5 hover:shadow-md hover:border-blue-600 transition"
             >
               <h3 className="text-xl font-black mb-2">{brand.name}</h3>
-              <p className="text-slate-500 text-sm">
-                {brand.count} products
-              </p>
+              <p className="text-slate-500 text-sm">{brand.count} products</p>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="bg-slate-900 text-white">
+      <section className="bg-slate-950 text-white">
         <div className="max-w-7xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-green-400 font-black mb-3">
@@ -247,13 +223,13 @@ export default function HomePage() {
             </h3>
 
             <p className="text-slate-600 leading-7 mb-6">
-              Send the exact part number and quantity. We will help check
-              stock, price, lead time and delivery options.
+              Send the exact part number and quantity. We will help check stock,
+              price, lead time and delivery options.
             </p>
 
             <Link
               href="/request-quote"
-              className="block bg-green-500 text-white text-center py-4 rounded-xl font-black"
+              className="block bg-green-500 hover:bg-green-600 text-white text-center py-4 rounded-xl font-black"
             >
               Send RFQ
             </Link>
@@ -262,20 +238,12 @@ export default function HomePage() {
       </section>
 
       <section className="max-w-7xl mx-auto px-6 py-16">
-        <div className="flex items-end justify-between gap-6 mb-8">
-          <div>
-            <p className="text-blue-600 font-black mb-3">
-              Featured Products
-            </p>
-            <h2 className="text-4xl font-black">
-              Industrial Automation Spare Parts
-            </h2>
-          </div>
-
-          <Link href="/products" className="text-blue-600 font-black">
-            View Products →
-          </Link>
-        </div>
+        <SectionHead
+          label="Featured Products"
+          title="Industrial Automation Spare Parts"
+          href="/products"
+          linkText="View Products →"
+        />
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {featuredProducts.map((product) => (
@@ -285,23 +253,12 @@ export default function HomePage() {
               className="bg-white border rounded-3xl overflow-hidden hover:shadow-lg transition"
             >
               <div className="h-48 bg-slate-100 border-b flex items-center justify-center">
-                {product.image ? (
-                  <ProductImage
-    src={product.image}
-    brand={product.brand}
-    model={product.model}
-                    className="w-full h-full object-contain p-5"
-                  />
-                ) : (
-                  <div className="text-center">
-                    <div className="text-4xl font-black text-blue-600">
-                      PLC
-                    </div>
-                    <p className="text-slate-400 text-sm mt-2">
-                      Product Image
-                    </p>
-                  </div>
-                )}
+                <ProductImage
+                  src={product.image}
+                  brand={product.brand}
+                  model={product.model}
+                  className="w-full h-full object-contain p-5"
+                />
               </div>
 
               <div className="p-6">
@@ -309,7 +266,9 @@ export default function HomePage() {
                   {product.brand}
                 </p>
 
-                <h3 className="text-xl font-black mb-3">{product.model}</h3>
+                <h3 className="text-xl font-black mb-3 line-clamp-2">
+                  {product.model}
+                </h3>
 
                 <p className="text-slate-500 text-sm mb-5">
                   {product.category}
@@ -335,69 +294,24 @@ export default function HomePage() {
               GlobalPLCParts supplies PLC modules, DCS modules, HMI panels,
               controllers, servo drives, sensors, I/O modules and industrial
               automation replacement parts for manufacturing plants, utilities,
-              oil and gas, water treatment, power generation and process
-              control projects.
+              oil and gas, water treatment, power generation and process control
+              projects.
             </p>
 
             <p>
               Search by model number, browse by brand, or submit a quotation
-              request. Our team supports industrial buyers looking for fast
-              price checking, availability confirmation and global delivery
-              options.
+              request. Our team supports industrial buyers looking for fast price
+              checking, availability confirmation and global delivery options.
             </p>
           </div>
         </div>
       </section>
 
-      <footer className="bg-slate-950 text-white">
-        <div className="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-4 gap-8">
-          <div>
-            <h3 className="text-2xl font-black mb-4">
-              Global<span className="text-blue-500">PLC</span>Parts
-            </h3>
-            <p className="text-slate-400 leading-7">
-              Industrial automation spare parts supplier for PLC, DCS, HMI and
-              control system replacement projects.
-            </p>
-          </div>
-
-          <FooterCol
-            title="Products"
-            links={[
-              ["All Products", "/products"],
-              ["Search Parts", "/search"],
-              ["Request Quote", "/request-quote"],
-            ]}
-          />
-
-          <FooterCol
-            title="Brands"
-            links={[
-              ["All Brands", "/brands"],
-              ...brands.slice(0, 3).map((b) => [b.name, `/brands/${b.slug}`]),
-            ]}
-          />
-
-          <div>
-            <h4 className="font-black mb-4">RFQ Support</h4>
-            <p className="text-slate-400 leading-7 mb-4">
-              Send model number, quantity and country for fast quotation.
-            </p>
-            <a
-              href={`https://wa.me/${whatsappNumber}?text=${whatsappText}`}
-              target="_blank"
-              className="inline-block bg-green-500 text-white px-5 py-3 rounded-xl font-black"
-            >
-              WhatsApp RFQ
-            </a>
-          </div>
-        </div>
-      </footer>
-
       <a
         href={`https://wa.me/${whatsappNumber}?text=${whatsappText}`}
         target="_blank"
-        className="fixed right-6 bottom-6 z-50 bg-green-500 text-white px-6 py-4 rounded-full shadow-lg font-black"
+        rel="noopener noreferrer"
+        className="fixed right-6 bottom-6 z-50 bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-full shadow-lg font-black"
       >
         WhatsApp
       </a>
@@ -407,9 +321,9 @@ export default function HomePage() {
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="bg-white border rounded-2xl p-5">
-      <p className="text-2xl font-black">{value}</p>
-      <p className="text-sm text-slate-500 mt-1">{label}</p>
+    <div className="bg-white/10 border border-white/10 rounded-2xl p-5">
+      <p className="text-2xl font-black text-white">{value}</p>
+      <p className="text-sm text-slate-300 mt-1">{label}</p>
     </div>
   );
 }
@@ -425,7 +339,7 @@ function HeroCard({ title, text }: { title: string; text: string }) {
 
 function CategoryCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="bg-white border rounded-3xl p-6 shadow-sm">
+    <div className="bg-white border rounded-3xl p-6 shadow-sm hover:shadow-md transition">
       <h3 className="text-xl font-black mb-3">{title}</h3>
       <p className="text-slate-600 leading-7">{text}</p>
     </div>
@@ -440,27 +354,27 @@ function DarkPoint({ text }: { text: string }) {
   );
 }
 
-function FooterCol({
+function SectionHead({
+  label,
   title,
-  links,
+  href,
+  linkText,
 }: {
+  label: string;
   title: string;
-  links: string[][];
+  href: string;
+  linkText: string;
 }) {
   return (
-    <div>
-      <h4 className="font-black mb-4">{title}</h4>
-      <div className="space-y-3">
-        {links.map(([label, href]) => (
-          <Link
-            key={href}
-            href={href}
-            className="block text-slate-400 hover:text-white"
-          >
-            {label}
-          </Link>
-        ))}
+    <div className="flex items-end justify-between gap-6 mb-8">
+      <div>
+        <p className="text-blue-600 font-black mb-3">{label}</p>
+        <h2 className="text-4xl font-black">{title}</h2>
       </div>
+
+      <Link href={href} className="text-blue-600 font-black">
+        {linkText}
+      </Link>
     </div>
   );
 }
