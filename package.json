@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "health-check": "node scripts/health-check.js",
     "update-images": "node scripts/update-real-images.js",
     "scrape-real": "node scripts/scrape-real-models-v21.js",
     "fix-images": "node scripts/fix-product-images-v2.js",
