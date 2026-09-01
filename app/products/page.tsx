@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { products } from "@/data/products";
 import ProductImage from "@/components/ProductImage";
 
@@ -38,20 +40,42 @@ function getPageNumbers(currentPage: number, totalPages: number) {
 }
 
 export default function ProductsPage() {
-  const [search, setSearch] = useState("");
-  const [brand, setBrand] = useState("All");
-  const [page, setPage] = useState(1);
+  return (
+    <Suspense
+      fallback={
+        <ProductsContent initialSearch="" initialBrand="All" initialPage={1} />
+      }
+    >
+      <ProductsFromUrl />
+    </Suspense>
+  );
+}
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlPage = Number(params.get("page") || 1);
-    const urlBrand = params.get("brand") || "All";
-    const urlSearch = params.get("search") || "";
+function ProductsFromUrl() {
+  const params = useSearchParams();
+  const urlPage = Number(params.get("page") || 1);
 
-    if (urlPage > 0) setPage(urlPage);
-    if (urlBrand) setBrand(urlBrand);
-    if (urlSearch) setSearch(urlSearch);
-  }, []);
+  return (
+    <ProductsContent
+      initialSearch={params.get("search") || ""}
+      initialBrand={params.get("brand") || "All"}
+      initialPage={urlPage > 0 ? urlPage : 1}
+    />
+  );
+}
+
+function ProductsContent({
+  initialSearch,
+  initialBrand,
+  initialPage,
+}: {
+  initialSearch: string;
+  initialBrand: string;
+  initialPage: number;
+}) {
+  const [search, setSearch] = useState(initialSearch);
+  const [brand, setBrand] = useState(initialBrand);
+  const [page, setPage] = useState(initialPage);
 
   const filteredProducts = useMemo(() => {
     const keyword = search.toLowerCase().trim();
@@ -114,9 +138,9 @@ export default function ProductsPage() {
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <section className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-14">
-          <a href="/" className="text-blue-600 font-bold">
+          <Link href="/" className="text-blue-600 font-bold">
             ← Back Home
-          </a>
+          </Link>
 
           <h1 className="text-5xl font-black mt-6 mb-4">
             Industrial Automation Parts

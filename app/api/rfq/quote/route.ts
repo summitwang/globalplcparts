@@ -87,9 +87,12 @@ export async function POST(req: Request) {
       .eq("id", id);
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: err.message || "Quote email failed" },
+      {
+        error:
+          error instanceof Error ? error.message : "Quote email failed",
+      },
       { status: 500 }
     );
   }

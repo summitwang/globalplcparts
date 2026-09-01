@@ -2,21 +2,49 @@
 
 import { useEffect, useState } from "react";
 
+type ImportResult = {
+  found?: number;
+  imported?: number;
+  updated?: number;
+  totalProducts?: number;
+  jobId?: string;
+  error?: string | null;
+};
+
+type ImportHistoryItem = {
+  id: string;
+  date: string;
+  fileName: string;
+  found: number;
+  imported: number;
+  updated: number;
+};
+
+type ScraperStats = {
+  totalProducts: number;
+  totalBrands: number;
+  missingImages: number;
+  importHistory: ImportHistoryItem[];
+};
+
 export default function ProductScraperPage() {
   const [password, setPassword] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const [stats, setStats] = useState<ScraperStats | null>(null);
+
+  async function fetchStats(): Promise<ScraperStats> {
+    const res = await fetch("/api/admin/scraper/start");
+    return res.json();
+  }
 
   async function loadStats() {
-    const res = await fetch("/api/admin/scraper/start");
-    const data = await res.json();
-    setStats(data);
+    setStats(await fetchStats());
   }
 
   useEffect(() => {
-    loadStats();
+    fetchStats().then(setStats);
   }, []);
 
   async function handleImport() {
@@ -41,9 +69,9 @@ export default function ProductScraperPage() {
       const data = await res.json();
       setResult(data);
       await loadStats();
-    } catch (err: any) {
+    } catch (error: unknown) {
       setResult({
-        error: err.message || "Import failed",
+        error: error instanceof Error ? error.message : "Import failed",
       });
     } finally {
       setLoading(false);
@@ -150,7 +178,7 @@ export default function ProductScraperPage() {
           )}
 
           <div className="space-y-3">
-            {stats?.importHistory?.map((item: any) => (
+            {stats?.importHistory?.map((item) => (
               <div
                 key={item.id}
                 className="border rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"

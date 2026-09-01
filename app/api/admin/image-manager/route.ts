@@ -35,7 +35,7 @@ export async function GET() {
       totalBrands: brands.length,
       brands,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed" },
       { status: 500 }

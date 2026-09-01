@@ -2,8 +2,8 @@ export type AnalyticsParams = Record<string, string | number | boolean | null | 
 
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
-    clarity?: (...args: any[]) => void;
+    gtag?: (...args: unknown[]) => void;
+    clarity?: (...args: unknown[]) => void;
   }
 }
 

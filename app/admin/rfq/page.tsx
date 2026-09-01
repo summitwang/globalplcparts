@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -93,7 +93,7 @@ export default function RFQAdminPage() {
         setSelectedId(list[0].id);
       }
       setAuthed(true);
-    } catch (err) {
+    } catch {
       alert("Load RFQ failed");
     } finally {
       setLoading(false);

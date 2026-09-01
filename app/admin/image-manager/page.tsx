@@ -2,8 +2,17 @@
 
 import { useEffect, useState } from "react";
 
+type ImageManagerStats = {
+  totalProducts: number;
+  totalBrands: number;
+  brands: Array<{
+    brand: string;
+    count: number;
+  }>;
+};
+
 export default function ImageManagerPage() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<ImageManagerStats | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/image-manager")
@@ -53,7 +62,7 @@ export default function ImageManagerPage() {
         <div className="space-y-3">
 
           {stats.brands.map(
-            (brand: any, index: number) => (
+            (brand, index) => (
               <div
                 key={index}
                 className="flex justify-between border-b pb-2"

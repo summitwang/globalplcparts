@@ -11,11 +11,31 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const PRODUCTS_PATH = path.join(DATA_DIR, "products.json");
 const LOG_PATH = path.join(DATA_DIR, "import-log.json");
 
+type ImportValue = string | number | boolean | Date | null | undefined;
+type ImportRow = Record<string, ImportValue>;
+
+type ProductRecord = Record<string, unknown> & {
+  brand?: unknown;
+  brandSlug?: string;
+  model?: string;
+  image?: unknown;
+};
+
+type ImportLog = {
+  id: string;
+  date: string;
+  fileName: string;
+  found: number;
+  imported: number;
+  updated: number;
+  totalProducts: number;
+};
+
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-function slugify(text: string) {
+function slugify(text: unknown) {
   return String(text || "")
     .toLowerCase()
     .replace(/\//g, "-")
@@ -26,7 +46,7 @@ function slugify(text: string) {
     .slice(0, 90);
 }
 
-function detectBrand(text: string) {
+function detectBrand(text: unknown) {
   const brands = [
     "Siemens",
     "Allen Bradley",
@@ -50,27 +70,27 @@ function detectBrand(text: string) {
   return brands.find((b) => lower.includes(b.toLowerCase())) || "Industrial";
 }
 
-function normalizeImage(src: string) {
+function normalizeImage(src: unknown) {
   if (!src) return "/product-images/default-plc.png";
-  if (src.startsWith("//")) return `https:${src}`;
+  if ((src as string).startsWith("//")) return `https:${src}`;
   return src;
 }
 
-function readJson(filePath: string, fallback: any) {
+function readJson<T>(filePath: string, fallback: T): T {
   try {
     if (!fs.existsSync(filePath)) return fallback;
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
   } catch {
     return fallback;
   }
 }
 
-function writeJson(filePath: string, data: any) {
+function writeJson(filePath: string, data: unknown) {
   ensureDataDir();
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
 }
 
-function makeProduct(row: any) {
+function makeProduct(row: ImportRow): ProductRecord | null {
   const brand = row.brand || row.Brand || row.BRAND || "";
   const model = row.model || row.Model || row.MODEL || row.part_number || row.PartNumber || "";
   const title = row.title || row.Title || `${brand} ${model}`;
@@ -95,9 +115,9 @@ function makeProduct(row: any) {
   };
 }
 
-function mergeProducts(newProducts: any[]) {
-  const existing = readJson(PRODUCTS_PATH, []);
-  const map = new Map<string, any>();
+function mergeProducts(newProducts: ProductRecord[]) {
+  const existing = readJson<ProductRecord[]>(PRODUCTS_PATH, []);
+  const map = new Map<string, ProductRecord>();
 
   for (const p of existing) {
     const key = `${p.brandSlug || slugify(p.brand)}-${p.model}`.toLowerCase();
@@ -130,15 +150,15 @@ function mergeProducts(newProducts: any[]) {
 }
 
 function getStats() {
-  const products = readJson(PRODUCTS_PATH, []);
-  const logs = readJson(LOG_PATH, []);
+  const products = readJson<ProductRecord[]>(PRODUCTS_PATH, []);
+  const logs = readJson<ImportLog[]>(LOG_PATH, []);
 
   const brands = new Set(
-  products.map((p: any) => p.brand).filter(Boolean)
+  products.map((p) => p.brand).filter(Boolean)
 );
 
 const missingImages = products.filter(
-  (p: any) => !p.image
+  (p) => !p.image
 ).length;
 
 return {
@@ -183,15 +203,15 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const workbook = XLSX.read(buffer, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet) as any[];
+    const rows = XLSX.utils.sheet_to_json<ImportRow>(sheet);
 
     const newProducts = rows
       .map((row) => makeProduct(row))
-      .filter(Boolean) as any[];
+      .filter((product): product is ProductRecord => product !== null);
 
     const result = mergeProducts(newProducts);
 
-    const logs = readJson(LOG_PATH, []);
+    const logs = readJson<ImportLog[]>(LOG_PATH, []);
 
     const log = {
       id: crypto.randomUUID(),
@@ -214,13 +234,13 @@ export async function POST(req: NextRequest) {
       jobId: log.id,
       error: null,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       found: 0,
       imported: 0,
       updated: 0,
       totalProducts: getStats().totalProducts,
-      error: error?.message || "Import failed",
+      error: error instanceof Error ? error.message : "Import failed",
     });
   }
 }

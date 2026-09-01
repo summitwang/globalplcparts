@@ -28,13 +28,13 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const body = (await req.json()) as Record<string, unknown>;
 
   if (!body.id) {
     return NextResponse.json({ error: "Missing RFQ id" }, { status: 400 });
   }
 
-  const updateData: Record<string, any> = {
+  const updateData: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
   };
 

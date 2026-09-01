@@ -77,32 +77,9 @@ export default function RequestQuotePage() {
       const formData = new FormData(form);
       const file = formData.get("attachment") as File | null;
 
-      let attachment = {
-        attachment_url: "",
-        attachment_name: "",
-        attachment_type: "",
-      };
-
       if (file && file.size > 0) {
-        attachment = await uploadAttachment(file);
+        await uploadAttachment(file);
       }
-
-      const payload = {
-        company_name: formData.get("company_name"),
-        contact_name: formData.get("contact_name"),
-        email: formData.get("email"),
-        phone: formData.get("phone"),
-        country: formData.get("country"),
-        part_number: formData.get("part_number"),
-        brand: formData.get("brand"),
-        quantity: formData.get("quantity"),
-        condition_required: formData.get("condition_required"),
-        target_delivery_date: formData.get("target_delivery_date"),
-        rfq_details: formData.get("rfq_details"),
-        attachment_url: attachment.attachment_url,
-        attachment_name: attachment.attachment_name,
-        attachment_type: attachment.attachment_type,
-      };
 
       const res = await fetch("/api/rfq", {
   method: "POST",
@@ -120,8 +97,10 @@ export default function RequestQuotePage() {
       setSuccess(
         "Your RFQ has been submitted successfully. Our sales team will contact you shortly."
       );
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error ? error.message : "Something went wrong."
+      );
     } finally {
       setLoading(false);
     }

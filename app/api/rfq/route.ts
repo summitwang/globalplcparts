@@ -150,9 +150,12 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: err.message || "Server error" },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Server error",
+      },
       { status: 500 }
     );
   }
