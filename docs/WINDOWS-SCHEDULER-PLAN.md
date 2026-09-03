@@ -240,7 +240,7 @@ Task 10B-2 should stop immediately if registration fails or the registered defin
 
 10. Confirm exactly one new report appears under `C:\GlobalPLCParts-Automation\reports\`, outside the repository.
 
-11. Inspect only approved report fields and confirm HEALTHY, runner exit code 0, and approximately 15 PASS / 4 WARN / 0 FAIL. Treat changed counts according to the contract instead of inventing a result.
+11. Inspect only approved report fields and confirm HEALTHY, runner exit code 0, and approximately 16 PASS / 3 WARN / 0 FAIL. Treat changed counts according to the contract instead of inventing a result.
 
 12. As a separate controlled verification, log out or use the Windows login screen and confirm the exact task can run under the configured dedicated user credential without enabling highest privileges. This test must not expose or re-request the password through Codex.
 

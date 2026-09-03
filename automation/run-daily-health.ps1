@@ -14,8 +14,8 @@ $ReportDirectory = "C:\GlobalPLCParts-Automation\reports"
 $HealthCheckScript = Join-Path $RepositoryPath "scripts\health-check.js"
 $PackageJson = Join-Path $RepositoryPath "package.json"
 $TimeoutMilliseconds = 300000
-$ExpectedPass = 15
-$ExpectedWarn = 4
+$ExpectedPass = 16
+$ExpectedWarn = 3
 $ExpectedFail = 0
 
 $StartTime = Get-Date
@@ -192,7 +192,7 @@ try {
                 elseif ($passCount -eq $ExpectedPass -and $warnCount -eq $ExpectedWarn -and $failCount -eq $ExpectedFail) {
                     $Status = "HEALTHY"
                     $RunnerExitCode = 0
-                    $ImportantFinding = "Health-check matches the approved 15 PASS / 4 WARN / 0 FAIL baseline."
+                    $ImportantFinding = "Health-check matches the approved 16 PASS / 3 WARN / 0 FAIL baseline."
                 }
                 else {
                     $Status = "ATTENTION"

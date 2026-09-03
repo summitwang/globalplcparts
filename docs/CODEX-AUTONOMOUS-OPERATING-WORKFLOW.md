@@ -298,8 +298,8 @@ Class B remediation must be contracted separately from these Class A observation
 
 The current read-only health-check baseline is:
 
-- **15 PASS**
-- **4 WARN**
+- **16 PASS**
+- **3 WARN**
 - **0 FAIL**
 
 Known warning categories are:
@@ -307,7 +307,8 @@ Known warning categories are:
 - Product records using fallback or SVG image paths
 - Heavily reused product image paths
 - High-risk automation scripts present in the repository
-- Git changes while reviewed development work is in progress
+
+Git changes during reviewed development may still produce a warning, but they are not part of the approved clean-tree baseline. An unexpected dirty tree during unattended execution remains an ATTENTION condition.
 
 These warnings are not automatically production incidents. They require trend comparison and context. Escalate only when a warning materially changes, crosses an approved threshold, exposes sensitive data, indicates an unexpected write, or creates production/customer risk.
 

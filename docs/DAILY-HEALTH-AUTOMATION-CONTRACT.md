@@ -40,16 +40,17 @@ The task must never repair, download, replace, generate, map, import, delete, re
 
 The currently approved baseline is:
 
-- **15 PASS**
-- **4 WARN**
+- **16 PASS**
+- **3 WARN**
 - **0 FAIL**
 
 Known warning categories and observed values are:
 
-1. Git working-tree changes during active, reviewed development
-2. 72 products using fallback or SVG image paths
-3. 36 image paths referenced heavily according to the health-check threshold
-4. 37 high-risk script files present but not executed
+1. 72 products using fallback or SVG image paths
+2. 36 image paths referenced heavily according to the health-check threshold
+3. 37 high-risk script files present but not executed
+
+Git working-tree changes during active, reviewed development may still produce a warning, but that conditional warning is not part of the approved clean-tree baseline. A dirty tree during unattended execution remains an ATTENTION condition.
 
 These are observations, not automatic incidents.
 
@@ -187,7 +188,7 @@ PASS:
 WARN:
 FAIL:
 
-Baseline: 15 PASS / 4 WARN / 0 FAIL
+Baseline: 16 PASS / 3 WARN / 0 FAIL
 
 Changes from baseline:
 ...
@@ -297,7 +298,7 @@ Every item must be explicitly approved before `GPLP-AUTO-001` is enabled:
 
 **READY FOR SCHEDULER IMPLEMENTATION — NOT YET ENABLED**
 
-The existing health-check is deterministic, read-only, exits successfully with warnings, and currently reports 15 PASS / 4 WARN / 0 FAIL. Scheduler implementation must wait until the approval checklist is complete and must be reviewed as a separate task.
+The existing health-check is deterministic, read-only, exits successfully with warnings, and currently reports 16 PASS / 3 WARN / 0 FAIL. Scheduler implementation must wait until the approval checklist is complete and must be reviewed as a separate task.
 
 Proposed execution schedule: **Daily at 3:00 AM Windows local time**.
 
