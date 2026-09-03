@@ -1,14 +1,14 @@
-# GPLP-AUTO-001 Windows Scheduler Implementation Plan
+# GPLP-AUTO-001 Windows Scheduler Configuration Record
 
 ## Status and approval boundary
 
-This document is a plan for Task 10B-2. It does not register, enable, run, test, or remove a scheduled task.
+The Windows scheduled task `GlobalPLCParts-Daily-Health` has been registered, and manual Task Scheduler execution has been successfully verified. The latest verified result is HEALTHY with exit code 0 and 16 PASS / 3 WARN / 0 FAIL.
 
-The repository remains in supervised mode. Creating the task, triggering it manually, changing its definition, or removing it requires explicit approval for that exact operation. `AGENTS.md` and the production guardrails, test/preview strategy, scripts registry, autonomous workflow, and daily-health contract remain authoritative.
+The repository remains in supervised mode. Any future manual run, definition change, disablement, removal, or other scheduler operation requires explicit approval for that exact action. `AGENTS.md` and the production guardrails, test/preview strategy, scripts registry, autonomous workflow, and daily-health contract remain authoritative. The next operational checkpoint is the first unattended scheduled execution.
 
 ## 1. Exact task identity
 
-| Field | Proposed value |
+| Field | Registered value |
 |---|---|
 | Task name | `GlobalPLCParts-Daily-Health` |
 | Task path | `\` (Task Scheduler root folder) |
@@ -27,7 +27,7 @@ The trigger uses Windows local time. It does not depend on the IANA identifier `
 
 The task has exactly one action:
 
-| Action field | Proposed value |
+| Action field | Registered value |
 |---|---|
 | Execute | `powershell.exe` |
 | Working directory | `C:\Projects\globalplcparts` |
@@ -39,27 +39,27 @@ The arguments are fixed. The task accepts no user-supplied command, path, or arg
 
 ## 3. Account and security context
 
-Proposed principal:
+Verified principal:
 
-- Use the current dedicated Windows user resolved at implementation time from `WindowsIdentity.GetCurrent().Name`.
+- Dedicated Windows account: `DESKTOP-EVEM1EN\GlobalPLCAuto`.
 - Logon type: `Password` — run whether that user is logged on or not.
 - Run level: `Limited`.
 - Do not use `SYSTEM`, a service account, or highest privileges.
-- Windows Task Scheduler may require the dedicated user's credential during registration. The user must enter it directly into the interactive Windows credential prompt used in Task 10B-2.
+- Windows Task Scheduler credential handling remains internal to Windows. The credential must never be provided to Codex or recorded in repository content or logs.
 - Do not embed GitHub, Supabase, Resend, Vercel, Cloudflare, email, network, or other credentials.
 - Do not grant filesystem rights or configure network credentials.
 
-This logon model permits the task to run while the dedicated user is logged out or the machine is at the login screen. Windows manages the configured task credential; the password must never be placed in the repository, written into PowerShell source, added to documentation, printed in logs, included in command arguments, or pasted into Codex. Task 10B-2 must not request the password through chat or a non-Windows prompt. If the interactive Windows credential step is unavailable or registration cannot proceed without exposing the credential, stop and use a separately reviewed Windows-native registration method.
+This logon model permits the task to run while the dedicated user is logged out or the machine is at the login screen. Windows manages the configured task credential; the password must never be placed in the repository, written into PowerShell source, added to documentation, printed in logs, included in command arguments, or pasted into Codex. No future scheduler operation may request the password through chat or a non-Windows prompt.
 
 The registration API may transiently require a plaintext representation of the interactively entered password in process memory. It must be passed directly to `Register-ScheduledTask`, never printed or persisted, and its variables must be cleared in a `finally` block. This unavoidable registration-time handling does not authorize Codex to receive, inspect, or store the credential.
 
-The task itself does not need administrator privileges and must run with limited rights. Registering a root-folder scheduled task should first be attempted from a normal interactive PowerShell session controlled by the user. If Windows denies registration, stop and request specific approval before using an elevated session; elevation for registration must not change the task principal or run level.
+The registered task runs with limited rights and highest privileges are not enabled. Any future change in privilege level requires separate approval.
 
 ## 4. Scheduler settings
 
-| Setting | Proposed configuration | Reason |
+| Setting | Registered configuration | Reason |
 |---|---|---|
-| Enabled | Yes, only after Task 10B-2 approval | Registration is the enablement action |
+| Enabled | Yes | The task is registered and scheduled |
 | Run whether user is logged on or not | Yes (`Password`) | Supports unattended execution using the dedicated user's Windows-managed task credential |
 | Wake computer to run | Yes (`WakeToRun`) | Allows the scheduler to wake the dedicated computer from supported sleep states so the check can run near 3:00 AM |
 | Start task if schedule is missed | Yes (`StartWhenAvailable`) | Permits one delayed run after sleep, shutdown, or restart |
@@ -83,7 +83,7 @@ The task itself does not need administrator privileges and must run with limited
 | Windows user logged in | The task runs normally under the configured dedicated user credential. |
 | Windows user logged out / machine at login screen | The task may run under the configured dedicated user credential. |
 | PC sleeping at 3:00 AM | The scheduler may wake the computer where Windows and hardware wake support permit. |
-| PC hibernating at 3:00 AM | Wake behavior depends on Windows and hardware support and must be verified during Task 10B-2 implementation/testing. |
+| PC hibernating at 3:00 AM | Wake behavior depends on Windows and hardware support and remains a separate operational verification. |
 | PC powered off at 3:00 AM | The task cannot run at 3:00 AM. After boot, `StartWhenAvailable` may permit one missed execution. |
 | Windows restarts | A running instance ends with the restart. No failure retry is configured. `StartWhenAvailable` may permit one missed execution after Windows becomes available again. |
 | Network unavailable | No network condition blocks the task. The local runner and health-check should operate normally because external access is prohibited. |
@@ -91,7 +91,7 @@ The task itself does not need administrator privileges and must run with limited
 | `npm.cmd` unavailable | The runner classifies the missing prerequisite as BLOCKED and performs no installation or repair. |
 | Previous execution still running | `IgnoreNew` prevents a second scheduler instance. The existing instance remains subject to both runner and scheduler five-minute limits. |
 
-`StartWhenAvailable` remains enabled so Windows may run one missed task after the machine becomes available. The scheduler plan enables the task's wake request but must not modify Windows power plans, enable wake timers globally, or change battery, sign-in, or other system settings. If Windows power policy blocks wake timers, Task 10B-2 must report that as an implementation blocker rather than changing the policy automatically.
+`StartWhenAvailable` remains enabled so Windows may run one missed task after the machine becomes available. The registered task enables the wake request but must not modify Windows power plans, enable wake timers globally, or change battery, sign-in, or other system settings. If Windows power policy blocks wake timers, report the condition rather than changing policy automatically.
 
 ## 6. Preferred implementation method
 
@@ -99,9 +99,9 @@ Use the PowerShell `ScheduledTasks` cmdlets with an interactive Windows credenti
 
 The GUI may be used afterward for visual inspection, not as the primary creation method. `schtasks.exe` is not preferred because expressing and auditing the full settings/principal policy is less direct.
 
-## 7. Exact proposed Task 10B-2 creation code
+## 7. Registration reference
 
-The following code is proposed for a separately approved Task 10B-2. **Do not execute it during planning.**
+The following code is retained as an auditable registration reference. **Do not re-run it against the existing registered task.**
 
 ```powershell
 Set-StrictMode -Version Latest
@@ -111,7 +111,7 @@ $taskName = "GlobalPLCParts-Daily-Health"
 $taskPath = "\"
 $repositoryPath = "C:\Projects\globalplcparts"
 $runnerPath = "C:\Projects\globalplcparts\automation\run-daily-health.ps1"
-$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+$taskUser = "DESKTOP-EVEM1EN\GlobalPLCAuto"
 
 if ((Get-TimeZone).Id -ne "Pacific Standard Time") {
     throw "Windows timezone is not Pacific Standard Time."
@@ -137,7 +137,7 @@ $action = New-ScheduledTaskAction `
 $trigger = New-ScheduledTaskTrigger -Daily -At "3:00 AM"
 
 $principal = New-ScheduledTaskPrincipal `
-    -UserId $currentUser `
+    -UserId $taskUser `
     -LogonType Password `
     -RunLevel Limited
 
@@ -155,10 +155,10 @@ $definition = New-ScheduledTask `
     -Description "GPLP-AUTO-001 — Daily read-only GlobalPLCParts repository health check."
 
 $credential = Get-Credential `
-    -UserName $currentUser `
+    -UserName $taskUser `
     -Message "Enter the dedicated Windows user's credential directly into this Windows prompt."
 
-if ($credential.UserName -ne $currentUser) {
+if ($credential.UserName -ne $taskUser) {
     throw "Credential user does not match the approved dedicated Windows user."
 }
 
@@ -170,7 +170,7 @@ try {
         -TaskName $taskName `
         -TaskPath $taskPath `
         -InputObject $definition `
-        -User $currentUser `
+        -User $taskUser `
         -Password $registrationPassword
 }
 finally {
@@ -179,13 +179,13 @@ finally {
 }
 ```
 
-The credential prompt must be completed locally by the user during Task 10B-2. The password value must not be sent to Codex, copied into the command, saved in a script, written to a transcript, or echoed. PowerShell transcript/log capture must not be enabled for the registration session unless it is proven to redact credential material safely.
+The reference shows the approved native credential boundary used for registration. The password value must never be sent to Codex, copied into a command, saved in a script, written to a transcript, or echoed.
 
-No restart count or restart interval is supplied. `WakeToRun` is enabled. `AllowStartIfOnBatteries` and `DontStopIfGoingOnBatteries` remain intentionally absent, leaving those battery capabilities disabled under the proposed policy.
+No restart count or restart interval is supplied. `WakeToRun` is enabled. `AllowStartIfOnBatteries` and `DontStopIfGoingOnBatteries` remain intentionally absent, leaving those battery capabilities disabled under the registered policy.
 
-## 8. Task 10B-2 verification procedure
+## 8. Verification record and remaining procedure
 
-Task 10B-2 should stop immediately if registration fails or the registered definition differs from this plan.
+Registration and one manual Task Scheduler execution have completed successfully. The steps below are retained as the verification procedure for future approved audits; they must not be repeated automatically.
 
 1. Retrieve only the exact task:
 
@@ -242,13 +242,13 @@ Task 10B-2 should stop immediately if registration fails or the registered defin
 
 11. Inspect only approved report fields and confirm HEALTHY, runner exit code 0, and approximately 16 PASS / 3 WARN / 0 FAIL. Treat changed counts according to the contract instead of inventing a result.
 
-12. As a separate controlled verification, log out or use the Windows login screen and confirm the exact task can run under the configured dedicated user credential without enabling highest privileges. This test must not expose or re-request the password through Codex.
+12. Review the first unattended scheduled execution and confirm the exact task ran under the configured dedicated user credential without enabling highest privileges. This review must not expose or re-request the password through Codex.
 
 13. Run read-only Git status and confirm the repository remains clean. Do not clean unexpected changes.
 
 14. Confirm no Supabase, Resend, production, customer, RFQ, business-data, high-risk-script, Git publication, or deployment side effect occurred.
 
-The manual test is a separately approval-gated action. Registration approval alone does not authorize starting it.
+The initial manual test is complete. Any additional manual test remains a separately approval-gated action.
 
 ## 9. Rollback plan
 
@@ -294,7 +294,7 @@ If the exact identity cannot be verified, stop. Never use wildcards or bulk task
 
 - Windows may require the dedicated user's credential at registration so the task can run while that user is logged out.
 - `WakeToRun` requests wake from supported sleep states, but actual wake behavior depends on Windows power policy and hardware support.
-- Hibernation wake behavior must be verified during Task 10B-2.
+- Hibernation wake behavior remains a separate operational verification.
 - A powered-off PC cannot run the task at 3:00 AM; `StartWhenAvailable` provides only a later opportunity.
 - The scheduler does not repair a missing repository, runner, Node installation, npm resolution, or health failure.
 - Zero retries means transient local failures remain visible for human review.
@@ -303,33 +303,24 @@ If the exact identity cannot be verified, stop. Never use wildcards or bulk task
 - `ExecutionPolicy Bypass` does not authenticate the script. Repository integrity and change control remain essential.
 - Registration permissions vary by Windows policy. A denied non-elevated registration is a stop condition, not permission to elevate automatically.
 
-## 11. Task 10B-2 approval checklist
+## 11. Implemented status and ongoing controls
 
-Before implementation, explicitly approve:
+Verified implementation facts:
 
-- [ ] Exact task name and root task path
-- [ ] Daily 3:00 AM Windows local trigger
-- [ ] `Pacific Standard Time` timezone verification
-- [ ] Current dedicated user account
-- [ ] Password logon model and `Limited` run level
-- [ ] User-entered Windows credential prompt and no credential disclosure to Codex
-- [ ] Logged-out execution verification
-- [ ] Principal is the dedicated Windows user and not `SYSTEM`
-- [ ] Highest privileges remain disabled unless separately approved
-- [ ] No plaintext credential in repository, scripts, documentation, arguments, or logs
-- [ ] `WakeToRun` enabled without changing Windows power plans or global wake-timer policy
-- [ ] Start-when-available behavior
-- [ ] AC/battery behavior
-- [ ] Five-minute execution limit
-- [ ] `IgnoreNew` multiple-instance policy
-- [ ] Zero restart/retry policy
-- [ ] Exact fixed PowerShell action and arguments
-- [ ] ScheduledTasks cmdlet implementation method
-- [ ] Whether registration may be attempted non-elevated
-- [ ] Separate authorization for one manual scheduler test
-- [ ] Exact rollback procedure
+- Task name: `GlobalPLCParts-Daily-Health`.
+- Principal: dedicated Windows account `GlobalPLCAuto`.
+- Logon model: run whether the user is logged on or not.
+- Highest privileges: disabled.
+- Schedule: daily at 3:00 AM Windows local time under `Pacific Standard Time`.
+- `WakeToRun`: enabled.
+- Runner: `automation/run-daily-health.ps1` in `C:\Projects\globalplcparts`.
+- Reports: `C:\GlobalPLCParts-Automation\reports`.
+- Manual Task Scheduler execution: successfully verified.
+- Latest result: HEALTHY, exit code 0, 16 PASS / 3 WARN / 0 FAIL.
+- Git safety under `GlobalPLCAuto`: PASS with a clean working tree.
+- Automatic Repairs, Production Changes, and External Side Effects: `NONE`.
 
-Until these are approved, **NO scheduled task may be created or run**.
+The first unattended scheduled execution remains to be verified. All configuration changes, additional manual runs, rollback operations, and expansions of scope remain approval-gated.
 
 ## References
 

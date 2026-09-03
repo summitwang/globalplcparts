@@ -277,13 +277,15 @@ Reports must not contain secret values, customer information, signed URLs, quota
 
 Commercial and customer decisions remain human-controlled at every stage unless a separate explicit policy changes a specific boundary.
 
+`GPLP-AUTO-001` is the first implemented Stage 2 Class A task. It runs under the existing supervised governance and does not authorize other recurring tasks or broader autonomy.
+
 ## 9. Initial automation candidates
 
 Listing a candidate does not enable or authorize it.
 
 | Priority | Candidate | Frequency | Class | Risk | Prerequisites | Enable now? | Current blockers |
 |---:|---|---|---|---|---|---|---|
-| 1 | Daily health-check | Daily | A | Low | Approved task contract, scheduler choice, isolated logs/stdout handling, warning baseline | No | Scheduling and output-retention policy not approved |
+| 1 | Daily health-check (`GPLP-AUTO-001`) | Daily at 3:00 AM Windows local time | A | Low | Approved contract, fixed runner, external reports, and 16 PASS / 3 WARN / 0 FAIL baseline | Yes — implemented | First unattended scheduled execution remains to be verified |
 | 2 | Regular validation | Daily or before approved local publication | A | Low | Approved contract, build-artifact expectations, timeout/resource policy | No | No recurring execution approval or scheduler |
 | 3 | Catalog integrity report | Daily | A | Low | Reuse read-only health checks; define report destination and count-drift thresholds | No | Report storage and alert thresholds undefined |
 | 4 | Product image integrity report | Daily or weekly | A | Low | Define fallback/reuse thresholds and non-incident baseline | No | Known fallback/reuse warnings need trend policy |
@@ -314,8 +316,8 @@ These warnings are not automatically production incidents. They require trend co
 
 ## 11. Final recommendation
 
-After this workflow and a specific task contract are approved, implement **a daily read-only `npm.cmd run health-check`** first.
+The first recommended automation, **a daily read-only `npm.cmd run health-check`**, has been implemented as `GPLP-AUTO-001` through Windows Task Scheduler.
 
-It is the lowest-risk useful recurring candidate because it is deterministic, stdout-only, does not import or execute high-risk automation scripts, checks catalog/blog/image/route/SEO/RFQ structure without accessing RFQ records or external services, and already distinguishes warnings from genuine failures. Before enabling it, approve the scheduler, execution directory, timeout, output retention/redaction, expected dirty-tree behavior, warning-change thresholds, and notification method.
+Its fixed runner remains deterministic and read-only, does not import or execute high-risk automation scripts, and checks catalog/blog/image/route/SEO/RFQ structure without accessing RFQ records or external services. Manual Task Scheduler execution has been verified as HEALTHY with 16 PASS / 3 WARN / 0 FAIL.
 
-Do not implement or schedule this recommendation until that separate approval is granted.
+The next operational checkpoint is the first unattended scheduled execution. Implementation of any additional automation still requires its own approved contract and authorization.

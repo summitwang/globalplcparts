@@ -7,8 +7,8 @@
 | Task ID | `GPLP-AUTO-001` |
 | Task name | Daily Repository Health Check |
 | Autonomy class | Class A — Automatic Read-Only |
-| Current rollout stage | Stage 1 / Pre-scheduling approval |
-| Future frequency | Daily |
+| Current rollout stage | Stage 2 / Scheduled Class A operation |
+| Frequency | Daily at 3:00 AM Windows local time |
 | Command | `npm.cmd run health-check` |
 | Repository working directory | `C:\Projects\globalplcparts` |
 | Production permission | **NONE** |
@@ -16,7 +16,7 @@
 | Business-data permission | **NONE** |
 | Mutation permission | **NONE** |
 
-This contract defines the task but does not enable or schedule it. `AGENTS.md` and the repository guardrail, test/preview, scripts registry, and autonomous workflow documents remain authoritative.
+This contract governs the registered Windows scheduled task `GlobalPLCParts-Daily-Health`. Manual Task Scheduler execution has been successfully verified. `AGENTS.md` and the repository guardrail, test/preview, scripts registry, and autonomous workflow documents remain authoritative.
 
 ## 2. Purpose
 
@@ -236,9 +236,9 @@ No notification integration is enabled by this contract.
 
 Do not configure or send email, WhatsApp, Telegram, Slack, SMS, or other external notification in this task. Notification channels, recipients, credentials, redaction, and delivery failures require a separate contract.
 
-## 13. Future scheduler requirements
+## 13. Active scheduler requirements
 
-An approved scheduler must:
+The registered Windows Task Scheduler task must continue to:
 
 - Run once daily from the exact repository directory.
 - Run under a named, known Windows user without administrator privileges.
@@ -246,7 +246,7 @@ An approved scheduler must:
 - Use the approved five-minute timeout.
 - Capture and sanitize stdout/stderr safely.
 - Avoid exposing secrets in commands, arguments, logs, or reports.
-- Avoid waking, deploying, or altering production systems.
+- Wake only the approved dedicated Windows computer under the configured `WakeToRun` setting; never deploy to or alter production systems.
 - Perform no automatic Git pull, npm install, repair, commit, push, or deployment.
 - Run only the contracted health-check command.
 - Record skipped runs or machine-offline conditions without unsafe catch-up loops.
@@ -259,7 +259,7 @@ An approved scheduler must:
 | ChatGPT/Codex-supported scheduling | Potentially useful if a supported scheduler is available and can operate on this exact local repository with the contract's permissions | Availability and local-filesystem execution are not established by repository or current environment evidence; do not assume or enable it |
 | GitHub Actions | Strong centralized scheduling and logs, but not an initial fit for this dedicated local checkout | Runs on a separate runner/checkout, adds external infrastructure and repository publication concerns, and requires reviewed secrets/network/artifact policies |
 
-**Proposed scheduler:** Windows Task Scheduler, using a separately reviewed minimal local runner solely to enforce the working directory, timeout, non-overlap, and external report capture. No runner or task is created here.
+**Implemented scheduler:** Windows Task Scheduler, using the reviewed local runner to enforce the working directory, timeout, baseline classification, and external report capture. The registered task name is `GlobalPLCParts-Daily-Health`.
 
 Official OpenAI materials describe ChatGPT and Codex automation use cases, but they do not prove that this particular local environment has a scheduler capable of running this contract. That option remains unverified.
 
@@ -276,34 +276,31 @@ If anything unexpected happens, stop. Never automatically:
 - Change pricing or commercial terms
 - Deploy, roll back, push, or publish changes
 
-## 15. Enablement approval checklist
+## 15. Operational status
 
-Every item must be explicitly approved before `GPLP-AUTO-001` is enabled:
+Verified implementation state:
 
-- [ ] Task contract approved
-- [ ] Daily frequency approved
-- [ ] Scheduler approved
-- [ ] Execution time approved
-- [ ] Working directory approved
-- [ ] Timeout approved
-- [ ] Warning thresholds approved
-- [ ] Report location approved
-- [ ] Report retention approved
-- [ ] Notification behavior approved
-- [ ] No-production permission confirmed
-- [ ] No-business-data permission confirmed
-- [ ] No-auto-repair policy confirmed
+- Windows task `GlobalPLCParts-Daily-Health` is registered.
+- It runs as the dedicated `GlobalPLCAuto` account whether or not that user is logged on.
+- Highest privileges are not enabled.
+- `WakeToRun` is enabled.
+- The schedule is daily at 3:00 AM Windows local time under `Pacific Standard Time`.
+- Manual Task Scheduler execution completed successfully.
+- The verified clean-tree result is HEALTHY with exit code 0 and 16 PASS / 3 WARN / 0 FAIL.
+- Automatic Repairs, Production Changes, and External Side Effects remain `NONE`.
+
+The first unattended scheduled execution is the next operational verification. It must be reviewed without weakening the safety boundaries or treating a successful run as authorization for additional automation.
 
 ## 16. Final recommendation
 
-**READY FOR SCHEDULER IMPLEMENTATION — NOT YET ENABLED**
+**REGISTERED AND MANUALLY VERIFIED**
 
-The existing health-check is deterministic, read-only, exits successfully with warnings, and currently reports 16 PASS / 3 WARN / 0 FAIL. Scheduler implementation must wait until the approval checklist is complete and must be reviewed as a separate task.
+The health-check is deterministic and read-only. The latest verified manual Task Scheduler execution completed with status HEALTHY, exit code 0, and 16 PASS / 3 WARN / 0 FAIL.
 
-Proposed execution schedule: **Daily at 3:00 AM Windows local time**.
+Active execution schedule: **Daily at 3:00 AM Windows local time**.
 
 - Windows timezone ID: `Pacific Standard Time`
 - Display timezone: Pacific Time (US & Canada)
 - Daylight saving time: Handled by Windows according to the configured system timezone.
 
-The schedule remains subject to user approval and confirmation that the dedicated Windows machine is normally powered on and idle then. If the machine is commonly off or asleep, select a known idle time instead; the scheduler must not wake the machine without separate approval.
+The first unattended scheduled execution remains to be verified. The task may wake the approved dedicated Windows machine from supported sleep states, but it must not change Windows power policy automatically.
