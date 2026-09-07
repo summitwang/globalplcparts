@@ -107,15 +107,17 @@ validation details. Its 72/36/37 reference counts are not an AUTO-002 baseline.
 
 ## Baseline, status and prioritization
 
-No AUTO-002 baseline is established. Every CLI run reports **NOT ESTABLISHED** and
-trends **NOT AVAILABLE**, not zero change. Any baseline supplied through the test
+The initial baseline is explicitly human approved in the approval record below.
+The unchanged Stage 1 collector does not load this documentation baseline:
+every CLI run still reports **NOT ESTABLISHED** and trends **NOT AVAILABLE**,
+not zero change. Any baseline supplied through the test
 seam is INCOMPATIBLE and unused, even if it claims a matching version. Baseline
 loading, approval, metric/schema fingerprints and comparison require a future
 reviewed contract change. Never automatically adopt a run as the baseline.
 
 | Status | Meaning / exit code |
 | --- | --- |
-| PASS | Reserved for complete collection without actionable findings and with an approved baseline. Not reachable in Stage 1 because baseline approval is outstanding. |
+| PASS | Reserved for complete collection without actionable findings and with an approved baseline. Not reachable in the unchanged Stage 1 collector because baseline loading/comparison is not implemented or authorized. |
 | ATTENTION | Safe completed collection with review observations, known implementation changes or absent/incompatible baseline. Exit 0. |
 | BLOCKED | Unsafe path rejected, unreadable/malformed input, unverified Git, unknown dirty state, changed inputs, resource limit, unsupported CLI arguments, or verified required integrity failure. Exit 2. |
 | CRITICAL STOP | Recognized sensitive material encountered. Abort and suppress collected metrics/findings. Exit 4. Any externally observed unexpected write, network access or prohibited execution must also stop the task immediately for human incident review. |
@@ -208,60 +210,125 @@ catalog/blog/image hashes unchanged; perform the single authorized manual run;
 check exit status; recheck unchanged data; run `git diff --check`; show Git status.
 No generic lint/build/validation or AUTO-001 run is part of this acceptance.
 
-## Candidate v1 baseline design — NOT APPROVED
+## Approved v1 initial baseline and proposed comparison design
 
-This section is a documentation-only proposal. It neither establishes a baseline
-nor implements comparison, storage, history or scheduling. The current collector
-still reports NOT ESTABLISHED and cannot emit PASS. Future comparison behavior
-below requires separately reviewed implementation as well as baseline approval.
+This section records the explicitly human-approved initial baseline in documentation
+only. It does not implement baseline loading, comparison, operational history or
+scheduling. The current collector still reports NOT ESTABLISHED and cannot emit
+PASS. Future comparison behavior below remains a proposal requiring separate
+implementation authorization and review.
 
 ### Evidence and candidate identity
 
-Candidate ID: `GPLP-AUTO-002-baseline-v1`, revision 1, status DRAFT / NOT APPROVED.
+Baseline ID: `GPLP-AUTO-002-baseline-v1`, revision 2,
+status **APPROVED / ACTIVE INITIAL BASELINE**.
+Revision 2 populates the prior revision 1 metric placeholders from the fresh
+human-supplied run; no comparison policy or collector behavior has changed.
 Target task: GPLP-AUTO-002; report schema: 1; collector version: 1;
 comparison policy proposed here: 1. Baseline revision is independent of collector
 and report-schema versions.
 
-The human reports successful manual verification under the repository-owning
-Windows User account: native exit 0, ATTENTION, COMPLETE WITHIN STAGE 1,
-NOT ESTABLISHED, CLEAN, zero changed paths, MAIN. All reported safety declarations
-were NONE, AUTO-001 was not invoked, and its reports were not read. The earlier
-CodexSandboxOffline ownership rejection is a separate execution-context failure,
-not a catalog regression or collector defect. No trust exception is authorized.
+### Explicit human approval record
 
-The values below come only from that human-supplied clean-tree result. PENDING
-means not supplied from that run, not zero and not an accepted exception. Do not
-fill gaps from older audits, AUTO-001 counts, source-code inference from ATTENTION,
-or a different checkout/run. The complete sanitized metric output, run timestamp,
-verified schema/collector versions and source commit identity remain to be supplied
-for approval. Do not invent them from the current checkout. No new run is authorized
-by this preparation document.
+- Approver: the human user, by explicit approval in this conversation.
+- Approval date: 2026-09-07 (session date; exact approval time was not supplied).
+- Approved baseline: `GPLP-AUTO-002-baseline-v1`, revision 2.
+- Evidence source commit: `ee6582e77001d2b9f09134e06a94c13a543f46e7`.
+- Approved schema / collector versions: 1 / 1.
+- Scope: the complete existing 42-metric set, evidence identity, clean-tree
+  eligibility, run timestamp and native Node exit 0 were human reviewed and
+  accepted as the initial Stage 1 baseline. All metric values remain unchanged.
+- Authority: explicit human approval, **not automatic baseline advancement**.
+
+ACTIVE INITIAL BASELINE identifies the approved reference in this document; it
+does not mean that the collector has started loading or comparing it. The original
+run's NOT ESTABLISHED output remains unchanged below as historical evidence.
+
+This approval grants no additional autonomy. It does not authorize automatic
+baseline replacement, automatic repairs, production changes, AUTO-002 scheduling,
+history/comparison implementation, AUTO-001 execution, external-service access,
+or access to secrets, credentials, customer data, RFQs, quotations, payments or
+supplier actions. Future baseline revisions require separate explicit human
+approval. No run, commit or push is authorized by this approval record.
+
+Evidence identity: `GPLP-AUTO-002 / 2026-09-07T07:27:51.184Z / schema 1 / collector 1`.
+Source: human-supplied clean-tree manual run, not a collection performed by Codex.
+
+| Evidence field | Supplied value |
+| --- | --- |
+| Task ID | GPLP-AUTO-002 |
+| Stage | 1 / MANUAL ONLY / Class A / STDOUT ONLY |
+| Status | ATTENTION |
+| Coverage | COMPLETE WITHIN STAGE 1 |
+| Baseline | NOT ESTABLISHED |
+| Schema / collector version | 1 / 1 |
+| Timestamp UTC | 2026-09-07T07:27:51.184Z |
+| Git state / changed paths / branch class | CLEAN / 0 / MAIN |
+| Native Node exit code | 0 (human verified from retained output of this exact run) |
+| Automatic actions | observation and reporting only |
+| Automatic repairs | NONE |
+| Repository writes | NONE |
+| Production changes | NONE |
+| External services accessed | NONE |
+| Scheduler changes | NONE |
+| Environment/credential/customer stores accessed | NONE |
+
+Current source commit observed before this documentation edit using
+`git --no-optional-locks rev-parse --verify HEAD`:
+`ee6582e77001d2b9f09134e06a94c13a543f46e7`.
+The human has now explicitly confirmed that the repository-owning Windows account
+returned this same commit from `git rev-parse HEAD`, and associates it with the
+verified clean-tree candidate run at `2026-09-07T07:27:51.184Z`. The same retained
+PowerShell session shows `Native Node exit code: 0`. The run-to-commit association
+is therefore human verified, not inferred from the later local HEAD observation.
+This completed evidence association for `GPLP-AUTO-002-baseline-v1` revision 2.
+The association itself did not grant approval; the subsequent explicit human
+approval is recorded separately above.
+
+Additional human-verified evidence for this exact run records native Node exit 0.
+The human retained the PowerShell output from the same manual collection and
+verified the following capture and output (documented here, not executed by Codex):
+
+```powershell
+$auto002NativeExitCode = $LASTEXITCODE
+Write-Output "Native Node exit code: $auto002NativeExitCode"
+```
+
+Retained result: `Native Node exit code: 0`. This evidence belongs to the candidate
+run at `2026-09-07T07:27:51.184Z`, not an earlier run. Candidate revision remains 2.
+
+The earlier CodexSandboxOffline ownership rejection is a separate execution-context
+failure, not a catalog regression or collector defect. No trust exception is authorized.
+All metric values below are transcribed exactly from this fresh human-supplied
+evidence, without normalization, recalculation, inference or older audit substitutes.
+No new run is authorized by this preparation document.
 
 ### Exact v1 metric set
 
 Every current Stage 1 numeric metric is versioned below, with Git state recorded
 as eligibility metadata. Counts are nonnegative integers; percentages are numeric
-values from 0 to 100. PENDING fields make the candidate incomplete for activation.
+values from 0 to 100. All 42 numeric metrics are populated; no metric is PENDING.
+Candidate values in each row correspond to the metric keys in the same order.
 
 | Group | Exact metric keys | Candidate values |
 | --- | --- | --- |
 | Integrity: blocking | `missingProductFields`, `duplicateProductSlugGroups` | 0, 0 (human verified) |
-| Integrity: blocking | `missingImageRecords`, `missingLocalImageRecords`, `missingBlogFields`, `duplicateBlogSlugGroups`, `invalidBlogDates`, `missingPublicRoutes` | Each PENDING; required acceptance target is zero |
-| Integrity: advisory consistency | `missingBrandSlug`, `missingDescriptions`, `inconsistentBrandSlugGroups` | Each PENDING; advisory under collector v1, not new blocking tests |
-| Quality proxies | `duplicateDescriptionGroups`, `duplicateBlogTitleGroups`, `distinctBlogDates`, `shortBlogDescriptionsUnder200Characters` | Each PENDING |
-| Quality proxies: images | `remoteImageRecords`, `svgImageRecords`, `svgImagePercent`, `heavilyReusedImagePaths`, `productsOnHeavilyReusedPaths`, `heavyReuseProductPercent`, `maximumImageReuse` | Each PENDING |
+| Integrity: blocking | `missingImageRecords`, `missingLocalImageRecords`, `missingBlogFields`, `duplicateBlogSlugGroups`, `invalidBlogDates`, `missingPublicRoutes` | 0, 0, 0, 0, 0, 0 |
+| Integrity: advisory consistency | `missingBrandSlug`, `missingDescriptions`, `inconsistentBrandSlugGroups` | 0, 0, 0 |
+| Quality proxies | `duplicateDescriptionGroups`, `duplicateBlogTitleGroups`, `distinctBlogDates`, `shortBlogDescriptionsUnder200Characters` | 1, 0, 2, 300 |
+| Quality proxies: images | `remoteImageRecords`, `svgImageRecords`, `svgImagePercent`, `heavilyReusedImagePaths`, `productsOnHeavilyReusedPaths`, `heavyReuseProductPercent`, `maximumImageReuse` | 0, 72, 1.36, 36, 2818, 53.29, 611 |
 | Inventory: catalog | `products`, `brands`, `categories` | 5288, 17, 5 (human verified) |
-| Inventory: content/images | `blogs`, `blogCategories`, `uniqueImagePaths` | Each PENDING |
-| Inventory: scripts | `scriptFiles`, `filenameRiskHeuristic`, `registryHighRiskScripts`, `scriptsWithoutRegistryRows`, `missingDirectNodeEntryPoints`, `checkImagesKeyOccurrences` | Each PENDING |
-| SEO source markers: detail pages | `detailPagesWithMetadataMarker`, `detailPagesWithCanonicalMarker`, `detailPagesWithStructuredDataMarker` | Each PENDING; each has range 0–3 |
-| SEO source markers: flags | `layoutMetadataMarker`, `sitemapCatalogMarker`, `sitemapBlogMarker`, `sitemapCurrentDateMarker`, `robotsSitemapMarker` | Each PENDING; each is 0 or 1 |
+| Inventory: content/images | `blogs`, `blogCategories`, `uniqueImagePaths` | 300, 18, 1571 |
+| Inventory: scripts | `scriptFiles`, `filenameRiskHeuristic`, `registryHighRiskScripts`, `scriptsWithoutRegistryRows`, `missingDirectNodeEntryPoints`, `checkImagesKeyOccurrences` | 47, 37, 41, 2, 1, 2 |
+| SEO source markers: detail pages | `detailPagesWithMetadataMarker`, `detailPagesWithCanonicalMarker`, `detailPagesWithStructuredDataMarker` | 3, 3, 3 |
+| SEO source markers: flags | `layoutMetadataMarker`, `sitemapCatalogMarker`, `sitemapBlogMarker`, `sitemapCurrentDateMarker`, `robotsSitemapMarker` | 1, 1, 1, 1, 1 |
 
 Inventory counts `products` and `blogs` also have the existing hard integrity
 requirement of being greater than zero. Inventory classification does not override
 that requirement. Nonzero missing-entry-point or registry-gap counts are review
 findings, not proof that a dangerous script executed.
 
-Baseline eligibility metadata: repository `C:\Projects\globalplcparts`, Git CLEAN,
+Baseline eligibility requirements: repository `C:\Projects\globalplcparts`, Git CLEAN,
 changedPaths 0, branch class MAIN, complete stable collection, native exit 0 and
 no safety stop. An ATTENTION run may be a baseline candidate: the human must
 explicitly acknowledge the listed nonblocking observations. Acceptance must never
@@ -342,8 +409,8 @@ approved baseline, overall status remains ATTENTION. No history exists in Stage 
 
 Compatibility requires the exact task ID, repository scope, report schema,
 collector version, metric-key set, types, units, grouping/threshold definitions
-and comparison-policy version. Proposed target is schema 1 / collector 1, but
-those identities must be confirmed from the supplied run. A future comparator
+and comparison-policy version. The supplied run confirms schema 1 / collector 1.
+A future comparator
 implementation must be versioned honestly; if it changes the collector version,
 v1 observations are not silently relabeled compatible. Revalidation and explicit
 human approval of the new candidate/version mapping are required. No automatic
@@ -351,8 +418,11 @@ migration, fallback to AUTO-001 or baseline replacement is allowed.
 
 ### Explicit human approval and replacement
 
-1. Complete all PENDING metrics from the same verified clean-tree report and
-   record its timestamp, commit identity and verified versions. Preserve only
+1. Supply all metrics from the same verified clean-tree report and
+   record its timestamp, commit identity and verified versions. Revision 2 has all
+   metrics, timestamp, versions, human-verified native exit 0 and explicit human
+   confirmation associating the run with the recorded source commit.
+   Preserve only
    sanitized aggregates and identifiers, never raw records, secrets or URLs.
 2. Present a frozen candidate revision with the exact metric table, source evidence,
    metric definitions, comparison policy and acknowledged nonblocking findings.
@@ -372,7 +442,9 @@ migration, fallback to AUTO-001 or baseline replacement is allowed.
    approval record; never advance from a schedule, moving average, decreased warning
    count, latest run or inferred human silence.
 
-Readiness: comparison design is ready for human review. Candidate v1 is **not yet
-complete for approval/activation** because the supplied clean-tree result contains
-only five of the numeric metrics and lacks run timestamp/version/commit evidence.
-No baseline has been approved or established by this document.
+Approval status: `GPLP-AUTO-002-baseline-v1` revision 2 is
+**APPROVED / ACTIVE INITIAL BASELINE** by explicit human approval. The complete
+42-metric set and its evidence are accepted without changing any values.
+Baseline identity and revision are unchanged. Nonblocking observations remain
+observations; acceptance does not authorize their repair. Runtime baseline
+loading/comparison, history and scheduling remain unimplemented and unauthorized.
