@@ -207,3 +207,172 @@ Implementation acceptance: review complete diff; run dedicated tests; confirm
 catalog/blog/image hashes unchanged; perform the single authorized manual run;
 check exit status; recheck unchanged data; run `git diff --check`; show Git status.
 No generic lint/build/validation or AUTO-001 run is part of this acceptance.
+
+## Candidate v1 baseline design — NOT APPROVED
+
+This section is a documentation-only proposal. It neither establishes a baseline
+nor implements comparison, storage, history or scheduling. The current collector
+still reports NOT ESTABLISHED and cannot emit PASS. Future comparison behavior
+below requires separately reviewed implementation as well as baseline approval.
+
+### Evidence and candidate identity
+
+Candidate ID: `GPLP-AUTO-002-baseline-v1`, revision 1, status DRAFT / NOT APPROVED.
+Target task: GPLP-AUTO-002; report schema: 1; collector version: 1;
+comparison policy proposed here: 1. Baseline revision is independent of collector
+and report-schema versions.
+
+The human reports successful manual verification under the repository-owning
+Windows User account: native exit 0, ATTENTION, COMPLETE WITHIN STAGE 1,
+NOT ESTABLISHED, CLEAN, zero changed paths, MAIN. All reported safety declarations
+were NONE, AUTO-001 was not invoked, and its reports were not read. The earlier
+CodexSandboxOffline ownership rejection is a separate execution-context failure,
+not a catalog regression or collector defect. No trust exception is authorized.
+
+The values below come only from that human-supplied clean-tree result. PENDING
+means not supplied from that run, not zero and not an accepted exception. Do not
+fill gaps from older audits, AUTO-001 counts, source-code inference from ATTENTION,
+or a different checkout/run. The complete sanitized metric output, run timestamp,
+verified schema/collector versions and source commit identity remain to be supplied
+for approval. Do not invent them from the current checkout. No new run is authorized
+by this preparation document.
+
+### Exact v1 metric set
+
+Every current Stage 1 numeric metric is versioned below, with Git state recorded
+as eligibility metadata. Counts are nonnegative integers; percentages are numeric
+values from 0 to 100. PENDING fields make the candidate incomplete for activation.
+
+| Group | Exact metric keys | Candidate values |
+| --- | --- | --- |
+| Integrity: blocking | `missingProductFields`, `duplicateProductSlugGroups` | 0, 0 (human verified) |
+| Integrity: blocking | `missingImageRecords`, `missingLocalImageRecords`, `missingBlogFields`, `duplicateBlogSlugGroups`, `invalidBlogDates`, `missingPublicRoutes` | Each PENDING; required acceptance target is zero |
+| Integrity: advisory consistency | `missingBrandSlug`, `missingDescriptions`, `inconsistentBrandSlugGroups` | Each PENDING; advisory under collector v1, not new blocking tests |
+| Quality proxies | `duplicateDescriptionGroups`, `duplicateBlogTitleGroups`, `distinctBlogDates`, `shortBlogDescriptionsUnder200Characters` | Each PENDING |
+| Quality proxies: images | `remoteImageRecords`, `svgImageRecords`, `svgImagePercent`, `heavilyReusedImagePaths`, `productsOnHeavilyReusedPaths`, `heavyReuseProductPercent`, `maximumImageReuse` | Each PENDING |
+| Inventory: catalog | `products`, `brands`, `categories` | 5288, 17, 5 (human verified) |
+| Inventory: content/images | `blogs`, `blogCategories`, `uniqueImagePaths` | Each PENDING |
+| Inventory: scripts | `scriptFiles`, `filenameRiskHeuristic`, `registryHighRiskScripts`, `scriptsWithoutRegistryRows`, `missingDirectNodeEntryPoints`, `checkImagesKeyOccurrences` | Each PENDING |
+| SEO source markers: detail pages | `detailPagesWithMetadataMarker`, `detailPagesWithCanonicalMarker`, `detailPagesWithStructuredDataMarker` | Each PENDING; each has range 0–3 |
+| SEO source markers: flags | `layoutMetadataMarker`, `sitemapCatalogMarker`, `sitemapBlogMarker`, `sitemapCurrentDateMarker`, `robotsSitemapMarker` | Each PENDING; each is 0 or 1 |
+
+Inventory counts `products` and `blogs` also have the existing hard integrity
+requirement of being greater than zero. Inventory classification does not override
+that requirement. Nonzero missing-entry-point or registry-gap counts are review
+findings, not proof that a dangerous script executed.
+
+Baseline eligibility metadata: repository `C:\Projects\globalplcparts`, Git CLEAN,
+changedPaths 0, branch class MAIN, complete stable collection, native exit 0 and
+no safety stop. An ATTENTION run may be a baseline candidate: the human must
+explicitly acknowledge the listed nonblocking observations. Acceptance must never
+normalize a blocking integrity failure or safety violation.
+
+### Percentages and units
+
+Keep both numerator and denominator; never replace counts with percentages.
+Existing collector values are:
+
+- `svgImagePercent = 100 * svgImageRecords / products`.
+- `heavyReuseProductPercent = 100 * productsOnHeavilyReusedPaths / products`.
+
+Both are rounded to two decimals as in collector v1. Future comparison may display
+derived short-description and remote-image percentages using blogs and products,
+respectively, but they are display-only calculations, not additional v1 collector
+metric keys. Duplicate-description groups are groups, not affected-product counts;
+do not report their ratio to products as an affected-product percentage.
+Heavy reuse remains at least 20 products per path; short description remains under
+200 trimmed characters. Whitespace/case/grouping semantics remain those in v1.
+Use unrounded count ratios to decide whether a rate increased; rounded display
+must not hide small changes. Zero denominators yield N/A for comparison and the
+existing empty-catalog/blog BLOCKED result, regardless of the collector's numeric
+zero percentage fallback.
+
+### Proposed comparison and status policy
+
+Precedence: CRITICAL STOP overrides BLOCKED, which overrides ATTENTION, then PASS.
+Status describes the local report only, never production availability or SEO success.
+
+| Condition | Proposed outcome |
+| --- | --- |
+| Any existing blocking integrity metric above zero; products or blogs zero | BLOCKED, even if a baseline recorded the same value; cannot be accepted as normal |
+| Unreadable/malformed required input, rejected path, changed inputs, Git execution/ownership/identity failure, unknown dirty paths | BLOCKED; retain existing fail-closed behavior |
+| Known reviewed implementation dirty paths | ATTENTION; never eligible as a new clean-tree baseline; do not expand the current dirty-path allowlist |
+| Valid baseline absent, incompatible or awaiting approval | ATTENTION, comparison unavailable; no PASS claim |
+| Advisory integrity count increases against previous or approved baseline | ATTENTION; unchanged/decreased counts are accepted only when acknowledged in the baseline |
+| SVG/reuse/remote/short-description/duplicate-description/duplicate-title count or applicable rate increases against either comparator | ATTENTION for review only; never BLOCKED from a quality proxy alone |
+| Quality-proxy counts and rates unchanged or decreased | No new alert when the approved baseline acknowledges them; decreases are observations, not verified quality improvements |
+| Distinct blog dates change in either direction | ATTENTION to review date provenance; neither direction proves freshness |
+| Any inventory metric changes against either comparator | ATTENTION, including decreases; catalog growth is a review observation, not an incident or automatic failure |
+| Any SEO source-marker count/flag changes in either direction | ATTENTION; marker presence/removal alone cannot establish runtime correctness/failure |
+| Stable complete clean MAIN run, approved compatible baseline, no new alerts, acknowledged baseline observations only | PASS; show accepted observations and remaining human backlog without escalating their unchanged presence |
+
+These initial thresholds intentionally use any increase/change, not an invented
+materiality allowance. They are proposals requiring approval. Counts and rates are
+evaluated independently: a lower percentage does not cancel a higher count.
+Do not introduce generic "nonzero means FAIL" rules for quality, inventory or SEO.
+An already nonzero advisory/proxy value is acknowledged only through explicit
+baseline approval; unchanged values in an unapproved draft remain review items.
+
+Action-required is separate from status: YES requests a new human-reviewed
+investigation or approval; accepted unchanged observations can be INFO with
+action-required NO while a previously acknowledged backlog remains visible.
+Severity and autonomy stay separate. Nothing in a comparison authorizes a repair.
+
+### Current / Previous / Approved Baseline / Delta
+
+Future report columns:
+
+```text
+Metric | Unit | Current | Previous | Approved Baseline | Delta vs Previous | Delta vs Baseline | Status
+```
+
+Current is the safely completed current snapshot. Previous is the most recent
+earlier comparable, complete, clean MAIN run with exit 0, if a future approved
+history mechanism provides it. Failed/partial/dirty runs are not previous values;
+show any known intervening gaps/failures separately rather than hiding them.
+Approved Baseline is the immutable explicitly named approved revision, never
+"latest report" or "previous run". Label all source timestamps and version IDs.
+
+Delta counts are signed `Current - comparator`; percentage deltas are percentage
+points. Optional relative changes are N/A when the comparator is zero. Unknown,
+absent or incompatible comparators display N/A with a reason; never zero-fill.
+Previous unavailable alone need not prevent PASS if the approved-baseline
+comparison is complete; clearly mark history coverage unavailable. Without any
+approved baseline, overall status remains ATTENTION. No history exists in Stage 1.
+
+Compatibility requires the exact task ID, repository scope, report schema,
+collector version, metric-key set, types, units, grouping/threshold definitions
+and comparison-policy version. Proposed target is schema 1 / collector 1, but
+those identities must be confirmed from the supplied run. A future comparator
+implementation must be versioned honestly; if it changes the collector version,
+v1 observations are not silently relabeled compatible. Revalidation and explicit
+human approval of the new candidate/version mapping are required. No automatic
+migration, fallback to AUTO-001 or baseline replacement is allowed.
+
+### Explicit human approval and replacement
+
+1. Complete all PENDING metrics from the same verified clean-tree report and
+   record its timestamp, commit identity and verified versions. Preserve only
+   sanitized aggregates and identifiers, never raw records, secrets or URLs.
+2. Present a frozen candidate revision with the exact metric table, source evidence,
+   metric definitions, comparison policy and acknowledged nonblocking findings.
+   Include a content digest of that exact candidate when an approval artifact is
+   separately authorized. Do not create operational history to perform this step.
+3. Obtain an explicit human statement naming the candidate ID, revision, evidence
+   identity/digest and policy version, for example: "I approve GPLP-AUTO-002-baseline-v1
+   revision [N], evidence [ID/digest], schema [S], collector [C], comparison policy 1,
+   with the listed values and acknowledged nonblocking observations."
+4. Record approver and approval time only after that statement. General approval
+   of Stage 1, this design, a successful run or a commit does not approve a baseline.
+   Authorization to persist/load a baseline or implement comparison must be explicit
+   and scoped separately; approval never enables scheduling, history or repairs.
+5. Never mutate an approved baseline. Any new proposal gets a new revision/version,
+   a diff against the prior approved baseline, rationale and complete evidence.
+   Explicit human approval is required to select it as active. Retain the old
+   approval record; never advance from a schedule, moving average, decreased warning
+   count, latest run or inferred human silence.
+
+Readiness: comparison design is ready for human review. Candidate v1 is **not yet
+complete for approval/activation** because the supplied clean-tree result contains
+only five of the numeric metrics and lacks run timestamp/version/commit evidence.
+No baseline has been approved or established by this document.
