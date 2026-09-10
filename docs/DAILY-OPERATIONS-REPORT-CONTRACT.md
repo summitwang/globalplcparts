@@ -1,6 +1,168 @@
 # GPLP-AUTO-002 — Daily Operations Report
 
-## Stage 2 current implementation contract
+## Stage 3 current implementation: local history and daily runner
+
+The human's 2026-09-10 FAST TRACK request authorizes implementation and synthetic
+testing of Class A AUTO-002 observation history, Previous comparison, a local
+runner and a proposed operations queue. This section supersedes earlier statements
+that history is deferred or unauthorized. It grants no scheduling, production,
+external-service, repair, dependency, customer/commercial or Git publication rights.
+The approved baseline artifact, revision and all 42 values are unchanged.
+
+### Architecture and fixed boundaries
+
+- `scripts/daily-operations-report.js`: version **3**, report schema **3**. Still
+  reads only the existing repository allowlist, performs fixed read-only Git
+  inspection and writes only stdout. Default output remains human-readable.
+  The sole optional flag `--json` provides bounded structured transport to the
+  runner; it accepts no input path and grants no writes or additional reads.
+- `automation/run-daily-operations.js`: fixed Node executable
+  `C:\Program Files\nodejs\node.exe`, fixed repository
+  `C:\Projects\globalplcparts`, fixed collector path and `--json` argument.
+  It invokes that collector once, shell-free, with an empty literal child
+  environment, a 90-second child timeout and 64 KiB per output buffer. It captures
+  the native exit code, suppresses raw stderr/exceptions, validates JSON and
+  reconstructs report prose from reviewed constants and validated aggregates.
+- `automation/auto002-history.js`: support module, not another executable task.
+  It provides Previous selection, persistence classifications and history storage.
+  Both support modules may import AUTO-002's pure validation/comparison functions;
+  they do not import application modules or invoke another repository automation.
+- The **only operational write root** is
+  `C:\GlobalPLCParts-Automation\auto002-history`. No history, logs, queue file,
+  lock file or temporary operational output is written in the repository.
+  Temporary roots and injected child results exist only as imported synthetic
+  test seams; neither CLI accepts alternate paths or commands.
+
+The runner requires the approved external parent directory to exist. It may create
+only the fixed history leaf and fresh run subdirectories. It does not create the
+parent, change ACLs, repair prerequisites or alter Windows configuration. The fixed
+Node installation path is a prerequisite, not an instruction to install Node.
+
+### Immutable observations and safe publication
+
+Each run uses a generated UUID-v4 subdirectory, claimed by exclusive nonrecursive
+`mkdir`. The writer uses exclusive `wx` temporary files, bounded UTF-8 JSON/text,
+flushes each file, and atomically renames within that private directory. It refuses
+existing destinations and run-ID collisions. `report.txt` is published first;
+`observation.json` is published **last** and is the successful observation commit
+marker. Each file is at most 64 KiB. The stored text states that this final JSON
+is the commit marker; only the runner's post-publication stdout claims WRITTEN.
+
+Only complete, stable, clean MAIN results with a valid approved-baseline comparison,
+exit 0 and no safety stop receive an observation JSON. ATTENTION is eligible.
+BLOCKED, CRITICAL STOP, dirty, non-MAIN and baseline-unavailable runs can receive a
+sanitized report only; they never become Previous. Child timeout, malformed transport
+or exit mismatch is reported on stdout without persisting unverified child output.
+
+Observations contain task/run IDs; UTC and offset-bearing local timestamps; fixed
+repository scope; MAIN branch; current HEAD; CLEAN/0 Git evidence; schema/collector
+3/3; `GPLP-AUTO-002-stage1-metrics-v1`; approved baseline ID/revision; all 42 metrics;
+overall status; native collector exit; baseline and combined comparison summaries;
+Previous run ID or null; and fixed safety declarations. No raw records, URLs,
+environment values, customer/RFQ data, attachments or sensitive traces are stored.
+The operations queue is included in each sanitized report, not a mutable work list.
+
+No observation, report, baseline or existing run directory is overwritten or deleted.
+There are no retries, cleanup, rotation or retention deletions. A crash may leave a
+temporary file or report-only directory; these are not eligible observations and
+are counted as gaps. Persistence failure preserves the verified **Current-only**
+result, withholds uncertain Previous claims, reports FAILED, and exits 2 (4 for a
+critical stop). It does not falsely report success or attempt remediation.
+
+### Previous selection and compatibility
+
+Only direct UUID-v4 directories under the fixed history root are inspected, and
+only their fixed `observation.json` files are read. No arbitrary locations, paths,
+latest pointers, recursive search, AUTO-001 reports or caller-supplied files are
+accepted. Selection uses the newest **strictly earlier UTC timestamp** among valid
+eligible records. Equal-timestamp competing latest records are ambiguous and
+withhold history; future/equal-to-current observations are excluded and counted.
+
+Validation rejects duplicate JSON keys, malformed or oversized data, unknown/missing
+fields, incomplete metrics, invalid counts/rates, wrong scope/branch/Git evidence,
+unsupported versions, wrong metric definition/baseline revision, invalid timestamp
+associations, nonzero native exits, stops and inconsistent comparison summaries.
+Malformed/incompatible records within the safe read bounds are skipped with an
+aggregate gap count, never exposed verbatim. Oversized files, unsafe paths,
+junctions/symlinks, hard-linked observation files, changing
+files/directories or unreadable history withhold history and persistence entirely.
+UNC paths and traversal are rejected. Ancestors are checked before access. Read
+descriptors, metadata and SHA-256 content fingerprints are compared before/after
+reading and again before publication; directory changes invalidate selection.
+
+The scan is limited to 10,000 root entries and a 15-second checked history budget.
+Reaching a limit is a visible history failure; it does not trigger rotation. No
+eligible Previous is a normal first-run state and alone does not prevent PASS.
+Skipped records remain visible, with a proposed repository/history review action.
+
+Only history schema/collector **3/3** is supported. Older report versions are not
+silently adopted as history. The approved baseline retains original **1/1** evidence;
+the explicit baseline **1/1 → current 3/3** mapping is valid because all 42 collection
+definitions, units and thresholds remain unchanged. Baseline approval never advances
+from Previous, a successful run, reduced warnings or a new HEAD. Historical source
+commit and current HEAD may differ; current HEAD changes during collection still block.
+
+### Comparison, persistence and operations queue
+
+Report columns: Metric, Unit, Current, Previous, Approved Baseline, Delta vs Previous,
+Delta vs Baseline, Classification, Persistence. Both deltas use signed count changes
+or percentage points. Each rate direction uses integer numerator/denominator
+cross-products; below-display-precision changes remain flagged. Missing comparators
+remain N/A. Baseline comparison and Previous comparison both contribute to status.
+
+Persistence describes the baseline-relative finding across the two observations:
+
+| State | Meaning |
+| --- | --- |
+| NOT COMPARABLE | No valid Previous/baseline or current observation is ineligible |
+| NEW | Current needs baseline-relative review and Previous did not, or a new Previous-relative increase needs review even below the approved baseline |
+| PERSISTENT | Both need baseline-relative review, without further divergence |
+| REGRESSED FURTHER | Proxy/advisory count or rate rises again, or inventory/marker absolute distance from baseline grows; this is an observation, not verified harm |
+| RESOLVED | A prior baseline-relative finding is no longer present; inventory reversal can still require review against Previous |
+| PROXY REDUCTION | A quality proxy decreased against Previous; takes precedence over RESOLVED and never claims verified quality improvement |
+| UNCHANGED | Neither observation has an active baseline-relative finding, no Previous-relative alert and no proxy reduction applies |
+
+The blocking/advisory/proxy/inventory/script/SEO policies remain as documented below.
+An unchanged proxy above the approved baseline is PERSISTENT; an unchanged explicitly
+accepted baseline proxy does not become a new incident. Existing approved inventory
+and proxy values stay visible. PASS/ATTENTION exit 0, BLOCKED exit 2, CRITICAL STOP
+exit 4. Runner persistence failure is separately exit 2 while the native collector
+exit and Current status remain visible; neither is relabeled to imply collection failed.
+
+The local queue groups affected metrics into repository, scripts, images, content
+and SEO review. Blocking integrity and repository/history problems receive priority
+1; other changes receive priority 2. Every item is a fixed-text **human review
+proposal**, never an executed action. Accepted unchanged observations create no
+new queue incident. Source markers and quality proxies do not prove runtime health,
+image relevance, licensing, indexing, content accuracy or live business performance.
+
+### Acceptance, scheduling preparation and limits
+
+Only dedicated AUTO-002 synthetic tests are authorized in this implementation turn:
+`node --test tests/daily-operations-report.test.js`. No real repository collection,
+external history creation or real runner execution is performed during development.
+Human review and human-controlled commit/clean-tree preparation must precede a
+separately authorized acceptance run under the repository-owning Windows account.
+The future manual entry point is the fixed Node executable followed by
+`C:\Projects\globalplcparts\automation\run-daily-operations.js`, with no arguments.
+
+Later scheduling must be separately approved. Prepared runner requirements are:
+repository-owning account, limited privilege, existing Node/parent path, one instance,
+no retries and an outer scheduler timeout (suggested 3 minutes). No scheduler task,
+Windows setting, power policy, credentials or Git trust exception is changed now.
+AUTO-001 remains independent and untouched.
+
+This is trusted local reporting, not a security boundary against hostile processes.
+Exclusive run namespaces prevent cooperative writer collisions; prechecks cannot
+prevent a hostile directory swap between filesystem calls. History has no external
+signature/authenticity authority; valid historical data must be protected from manual
+or hostile edits by existing local access controls. Atomic rename provides visibility,
+not a guarantee against power-loss/filesystem failure. The history budget is checked
+between synchronous calls; it is not a hard timeout for a stuck filesystem. The child
+collector has the hard runner timeout; a later outer scheduler timeout is still needed.
+No ACL/configuration changes are authorized to address these limits automatically.
+
+## Stage 2 reference implementation contract (historical)
 
 Stage 2 minimal baseline comparison was explicitly authorized by the human on
 2026-09-09. It implements **Current vs Approved Baseline only**, Class A, local-only,

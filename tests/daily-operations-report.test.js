@@ -39,7 +39,7 @@ function fixture(t) {
   return { root, write, product, post, readGit };
 }
 
-test("valid synthetic collection does not write and has complete Stage 2 coverage", (t) => {
+test("valid synthetic collection does not write and has complete Stage 3 coverage", (t) => {
   const f = fixture(t);
   const contents = (directory) => fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).map((e) => {
     const file = path.join(directory, e.name);
@@ -51,7 +51,7 @@ test("valid synthetic collection does not write and has complete Stage 2 coverag
   assert.equal(report.baseline, "APPROVED / ACTIVE INITIAL BASELINE");
   assert.equal(report.metrics.products, 1);
   assert.equal(report.metrics.missingLocalImageRecords, 0);
-  assert.equal(report.coverage, "COMPLETE WITHIN STAGE 2");
+  assert.equal(report.coverage, "COMPLETE WITHIN STAGE 3");
   assert.deepEqual(contents(f.root), before);
 });
 
@@ -110,7 +110,7 @@ test("unsupported baseline compatibility is withheld rather than compared", (t) 
   assert.equal(report.status, "ATTENTION");
   assert.equal(report.metrics.products, 1);
   assert.ok(report.comparison.every((r) => r.baseline === null && r.deltaBaseline === null));
-  assert.ok(render(report).includes("NOT AVAILABLE — HISTORY DEFERRED"));
+  assert.ok(render(report).includes("DIRECT COLLECTOR HAS NO HISTORY ACCESS"));
 });
 
 test("arbitrary catalog text and remote URLs never reach output; URLs are not followed", (t) => {
@@ -279,7 +279,7 @@ for (const [name, change] of Object.entries(badBaselines)) test(`baseline reject
   assert.throws(() => validateBaseline(raw), (e) => e.code === "BASELINE");
 });
 
-test("only the explicit evidence 1/1 to Stage 2 mapping is supported", () => {
+test("only the explicit evidence 1/1 to current metrics mapping is supported", () => {
   assert.equal(validateBaseline(baselineText).collectorVersion, 1);
   for (const key of ["schemaVersion", "collectorVersion"]) {
     const b = copy(approved); b[key] = 2;
@@ -329,8 +329,8 @@ test("historical source commit mismatch is allowed; current HEAD change is block
   const f = fixture(t);
   const git = { ...f.readGit(), commit: "b".repeat(40), fingerprint: "stable-new-commit" };
   const report = collect({ ...f, readGit: () => git });
-  assert.equal(report.coverage, "COMPLETE WITHIN STAGE 2");
-  assert.equal(report.schema, 2); assert.equal(report.collectorVersion, 2);
+  assert.equal(report.coverage, "COMPLETE WITHIN STAGE 3");
+  assert.equal(report.schema, 3); assert.equal(report.collectorVersion, 3);
   let call = 0;
   assert.equal(collect({ ...f, readGit: () => ({ ...git, fingerprint: String(call++) }) }).failure, "CHANGED");
 });
@@ -367,4 +367,332 @@ test("collector uses only approved built-ins and contains no network, environmen
   assert.deepEqual(modules, ["node:fs", "node:path", "node:crypto", "node:child_process"]);
   assert.doesNotMatch(source, /process\.env|\bfetch\s*\(|fs\.(?:write|append|mkdir|rm|unlink|rename|truncate|copyFile)/);
   assert.match(source, /fs\.openSync\(file, "r"\)/);
+});
+
+const history = require("../automation/auto002-history.js");
+const runner = require("../automation/run-daily-operations.js");
+const { ROOT } = require("../scripts/daily-operations-report.js");
+const ids = Array.from({ length: 6 }, (_, i) => `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`);
+function syntheticReport(metrics = approved.metrics, timestampUTC = "2026-09-10T07:00:00.000Z") {
+  const comparison = compareMetrics(metrics, approved.metrics);
+  return { task: "GPLP-AUTO-002", schema: 3, collectorVersion: 3, repository: ROOT, timestampUTC,
+    coverage: "COMPLETE WITHIN STAGE 3", baseline: "APPROVED / ACTIVE INITIAL BASELINE", approvedBaseline: copy(approved),
+    git: { state: "CLEAN", changedPaths: 0, branch: "MAIN", head: "b".repeat(40) },
+    metrics: copy(metrics), comparison: comparison.rows, status: comparison.status, findings: [], nativeExitCode: exitCodeFor(comparison.status) };
+}
+function syntheticRunner(report, store, runId = ids[0]) {
+  return runner.run({ execute: () => ({ status: report.nativeExitCode, stdout: JSON.stringify(report) }), store, runId });
+}
+function historyFixture(t) {
+  const f = fixture(t);
+  const root = path.join(f.root, "history");
+  fs.mkdirSync(root);
+  return { ...f, historyRoot: root, store: () => new history.HistoryStore(root) };
+}
+
+test("history first and subsequent runs publish immutable complete observations and Previous", (t) => {
+  const f = historyFixture(t);
+  const first = syntheticRunner(syntheticReport(), f.store());
+  assert.equal(first.exitCode, 0);
+  assert.match(first.output, /WRITTEN \/ IMMUTABLE/);
+  const file = path.join(f.historyRoot, ids[0], "observation.json");
+  const before = fs.readFileSync(file, "utf8");
+  const observation = history.validateObservation(before, ids[0], approved);
+  assert.equal(Object.keys(observation.metrics).length, 42);
+  assert.equal(observation.previousRunId, null);
+  assert.equal(Date.parse(observation.timestampUTC), Date.parse(observation.timestampLocal));
+  const second = syntheticRunner(syntheticReport(approved.metrics, "2026-09-11T07:00:00.000Z"), f.store(), ids[1]);
+  assert.equal(second.exitCode, 0);
+  assert.equal(second.report.comparison.every((r) => r.persistence === "UNCHANGED" && r.deltaPrevious === 0), true);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(f.historyRoot, ids[1], "observation.json"))).previousRunId, ids[0]);
+  assert.equal(fs.readFileSync(file, "utf8"), before);
+  assert.deepEqual(fs.readdirSync(path.join(f.historyRoot, ids[0])).sort(), ["observation.json", "report.txt"]);
+});
+
+test("Previous selects newest strictly earlier eligible ATTENTION and reports skipped records", (t) => {
+  const f = historyFixture(t);
+  const m = { ...approved.metrics, scriptFiles: 48 };
+  syntheticRunner(syntheticReport(m, "2026-09-08T07:00:00.000Z"), f.store(), ids[0]);
+  syntheticRunner(syntheticReport(m, "2026-09-09T07:00:00.000Z"), f.store(), ids[1]);
+  syntheticRunner(syntheticReport(m, "2026-09-12T07:00:00.000Z"), f.store(), ids[2]);
+  fs.mkdirSync(path.join(f.historyRoot, ids[3])); // abandoned temp, not a committed observation
+  fs.writeFileSync(path.join(f.historyRoot, ids[3], "observation.json.tmp"), "incomplete");
+  const store = f.store(); store.initialize();
+  const selection = store.select("2026-09-10T07:00:00.000Z", approved);
+  assert.equal(selection.previous.runId, ids[1]);
+  assert.equal(selection.skipped, 2);
+});
+
+test("all seven persistence labels, proxy reductions and inventory reversals", () => {
+  const row = (key, current, prior) => history.comparePrevious(current, approved.metrics, prior && { metrics: prior }).rows.find((r) => r.metric === key);
+  const base = approved.metrics;
+  const higher = { ...base, duplicateDescriptionGroups: 2 };
+  assert.equal(row("duplicateDescriptionGroups", higher, null).persistence, "NOT COMPARABLE");
+  assert.equal(row("duplicateDescriptionGroups", higher, base).persistence, "NEW");
+  assert.equal(row("duplicateDescriptionGroups", higher, higher).persistence, "PERSISTENT");
+  assert.equal(row("duplicateDescriptionGroups", { ...higher, duplicateDescriptionGroups: 3 }, higher).persistence, "REGRESSED FURTHER");
+  assert.equal(row("duplicateDescriptionGroups", base, higher).persistence, "PROXY REDUCTION");
+  assert.equal(row("duplicateDescriptionGroups", base, base).persistence, "UNCHANGED");
+  const resolved = row("scriptFiles", base, { ...base, scriptFiles: 48 });
+  assert.equal(resolved.persistence, "RESOLVED");
+  assert.equal(resolved.status, "ATTENTION"); // reversal still requires inventory review
+});
+
+test("previous rate comparison retains pp deltas and subprecision direction", () => {
+  const previous = { ...approved.metrics, products: 1000000, svgImageRecords: 10000, svgImagePercent: 1, heavyReuseProductPercent: 0.28 };
+  const current = { ...previous, svgImageRecords: 10001 };
+  const rows = history.comparePrevious(current, approved.metrics, { metrics: previous }).rows;
+  const rate = rows.find((r) => r.metric === "svgImagePercent");
+  assert.equal(rate.deltaPrevious, 0);
+  assert.equal(rate.previousUnroundedRateChanged, true);
+  assert.equal(rate.status, "ATTENTION");
+  assert.equal(rows.find((r) => r.metric === "svgImageRecords").deltaPrevious, 1);
+});
+
+for (const [label, mutate] of Object.entries({
+  "wrong repository": (o) => { o.repository = "C:\\elsewhere"; },
+  "dirty Git": (o) => { o.gitState = "DIRTY"; o.changedPaths = 1; },
+  "non MAIN": (o) => { o.branch = "OTHER"; },
+  "unsupported schema": (o) => { o.schemaVersion = 2; },
+  "unsupported collector": (o) => { o.collectorVersion = 2; },
+  "wrong definition": (o) => { o.metricDefinitionId = "unknown"; },
+  "wrong baseline": (o) => { o.baselineRevision = 3; },
+  "missing metric": (o) => { delete o.metrics.products; },
+  "extra sensitive field": (o) => { o.customer = "SYNTHETIC_PRIVATE"; },
+  "BLOCKED": (o) => { o.status = "BLOCKED"; },
+  "CRITICAL STOP": (o) => { o.status = "CRITICAL STOP"; },
+  "exit code": (o) => { o.nativeExitCode = 2; },
+  "safety stop": (o) => { o.safety.safetyStop = "STOP"; },
+  "invalid timestamp": (o) => { o.timestampUTC = "invalid"; },
+  "false local timestamp": (o) => { o.timestampLocal = "2026-09-09T07:00:00.000+00:00"; },
+  "false comparison summary": (o) => { o.baselineComparison.ATTENTION = 1; },
+})) test(`history rejects ${label}`, () => {
+  const o = history.makeObservation(syntheticReport(), ids[0], null);
+  mutate(o);
+  assert.throws(() => history.validateObservation(JSON.stringify(o), ids[0], approved));
+});
+
+test("malformed/duplicate-key history is skipped with sanitized gap reporting", (t) => {
+  const f = historyFixture(t);
+  for (let i = 0; i < 2; i++) {
+    fs.mkdirSync(path.join(f.historyRoot, ids[i]));
+    fs.writeFileSync(path.join(f.historyRoot, ids[i], "observation.json"), i ? '{"runId":1,"runId":2}' : '{SYNTHETIC_PRIVATE https://invalid.example');
+  }
+  const result = syntheticRunner(syntheticReport(), f.store(), ids[2]);
+  assert.equal(result.exitCode, 0);
+  assert.match(result.output, /skipped\/unavailable: 2/);
+  assert.doesNotMatch(result.output, /SYNTHETIC_PRIVATE|https:\/\//);
+});
+
+test("unsafe root, traversal and history junctions are rejected before reading", (t) => {
+  assert.throws(() => new history.HistoryStore("\\\\host\\share"));
+  const f = historyFixture(t);
+  assert.throws(() => f.store().target("../escape"));
+  fs.symlinkSync(f.root, path.join(f.historyRoot, ids[0]), process.platform === "win32" ? "junction" : "dir");
+  const result = syntheticRunner(syntheticReport(), f.store(), ids[1]);
+  assert.equal(result.exitCode, 2);
+  assert.match(result.output, /HISTORY VALIDATION OR PERSISTENCE FAILED/);
+  assert.equal(fs.existsSync(path.join(f.historyRoot, ids[1])), false);
+});
+
+test("history mutation and concurrent publication invalidate selection without retry", (t) => {
+  const f = historyFixture(t);
+  syntheticRunner(syntheticReport(), f.store(), ids[0]);
+  const store = f.store(); store.initialize();
+  store.select("2026-09-11T07:00:00.000Z", approved);
+  fs.appendFileSync(path.join(f.historyRoot, ids[0], "observation.json"), " ");
+  assert.throws(() => store.verify());
+  const other = f.store(); other.initialize();
+  other.select("2026-09-11T07:00:00.000Z", approved);
+  fs.mkdirSync(path.join(f.historyRoot, ids[1]));
+  assert.throws(() => other.publish(ids[2], "safe", null));
+  assert.equal(fs.existsSync(path.join(f.historyRoot, ids[2])), false);
+});
+
+test("run ID collision never overwrites an existing observation", (t) => {
+  const f = historyFixture(t);
+  syntheticRunner(syntheticReport(), f.store(), ids[0]);
+  const file = path.join(f.historyRoot, ids[0], "observation.json");
+  const before = fs.readFileSync(file);
+  const result = syntheticRunner(syntheticReport(approved.metrics, "2026-09-11T07:00:00.000Z"), f.store(), ids[0]);
+  assert.equal(result.exitCode, 2);
+  assert.deepEqual(fs.readFileSync(file), before);
+  assert.equal(result.report.status, "PASS");
+  assert.match(result.output, /Native collector exit code: 0/);
+});
+
+test("persistence error preserves current result, hides raw exception and makes one attempt", () => {
+  let attempts = 0;
+  const store = { initialize() {}, select: () => ({ previous: null, skipped: 0 }), publish() { attempts++; throw new Error("SYNTHETIC_PRIVATE https://invalid.example"); } };
+  const result = syntheticRunner(syntheticReport(), store);
+  assert.equal(attempts, 1);
+  assert.equal(result.exitCode, 2);
+  assert.equal(result.report.metrics.products, 5288);
+  assert.equal(result.report.status, "PASS");
+  assert.doesNotMatch(result.output, /SYNTHETIC_PRIVATE|https:\/\//);
+  assert.match(result.output, /FAILED; CURRENT RESULT RETAINED/);
+});
+
+test("ineligible blocked/critical/dirty/nonMAIN runs never publish an observation", (t) => {
+  const f = historyFixture(t);
+  for (const [i, kind] of ["BLOCKED", "CRITICAL STOP", "DIRTY", "OTHER"].entries()) {
+    const r = syntheticReport();
+    if (i < 2) { r.status = kind; r.nativeExitCode = exitCodeFor(kind); if (kind === "BLOCKED") r.metrics.missingBlogFields = 1; }
+    else if (kind === "DIRTY") { r.git.state = "DIRTY"; r.git.changedPaths = 1; r.status = "ATTENTION"; }
+    else { r.git.branch = "OTHER"; r.status = "ATTENTION"; }
+    const result = syntheticRunner(r, f.store(), ids[i]);
+    assert.match(result.output, /REPORT ONLY \/ INELIGIBLE/);
+    assert.equal(fs.existsSync(path.join(f.historyRoot, ids[i], "observation.json")), false);
+    assert.equal(result.exitCode, r.nativeExitCode);
+  }
+});
+
+test("runner timeout, bad transport and exit mismatch do not persist or leak stderr", () => {
+  for (const child of [
+    { error: new Error("SYNTHETIC_PRIVATE"), status: null, stderr: "SYNTHETIC_PRIVATE" },
+    { status: 0, stdout: "SYNTHETIC_PRIVATE" },
+    { status: 2, stdout: JSON.stringify(syntheticReport()) },
+  ]) {
+    const result = runner.run({ execute: () => child, store: { initialize() { assert.fail("must not access history"); } } });
+    assert.equal(result.exitCode, 2);
+    assert.doesNotMatch(result.output, /SYNTHETIC_PRIVATE/);
+  }
+});
+
+test("transport rebuilds prose and rejects hostile metric/provenance content", () => {
+  const r = syntheticReport();
+  r.findings = [{ action: "SYNTHETIC_PRIVATE https://invalid.example" }];
+  r.comparison = [{ metric: "SYNTHETIC_PRIVATE" }];
+  assert.doesNotMatch(JSON.stringify(history.acceptTransport(JSON.stringify(r), 0)), /SYNTHETIC_PRIVATE/);
+  r.metrics.products = "SYNTHETIC_PRIVATE";
+  assert.throws(() => history.acceptTransport(JSON.stringify(r), 0));
+});
+
+test("operations queue is prioritized, fixed prose, proposed only; unchanged proxies do not alert", () => {
+  const r = syntheticReport();
+  assert.deepEqual(history.operationsQueue(r.comparison, r.git), []);
+  const rows = compareMetrics({ ...approved.metrics, missingBlogFields: 1, scriptFiles: 48, duplicateDescriptionGroups: 2 }, approved.metrics).rows;
+  const queue = history.operationsQueue(rows, r.git);
+  assert.equal(queue[0].priority, 1);
+  assert.ok(queue.every((q) => q.proposedOnly));
+  assert.ok(queue.some((q) => q.id === "scripts"));
+  const catalog = compareMetrics({ ...approved.metrics, brands: 18 }, approved.metrics).rows;
+  assert.equal(history.operationsQueue(catalog, r.git)[0].id, "repository");
+});
+
+test("runner launch is fixed, bounded, shell-free and does not inherit environment", () => {
+  assert.equal(runner.NODE, "C:\\Program Files\\nodejs\\node.exe");
+  assert.equal(runner.COLLECTOR, ROOT + "\\scripts\\daily-operations-report.js");
+  assert.deepEqual(runner.CHILD_OPTIONS.env, {});
+  assert.equal(runner.CHILD_OPTIONS.shell, false);
+  assert.equal(runner.CHILD_OPTIONS.timeout, 90000);
+  assert.equal(runner.CHILD_OPTIONS.maxBuffer, 65536);
+  for (const name of ["auto002-history.js", "run-daily-operations.js"]) {
+    const source = fs.readFileSync(path.join(__dirname, "../automation", name), "utf8");
+    assert.doesNotMatch(source, /process\.env|\bfetch\s*\(|https?:\/\/|fs\.(?:rm|unlink|appendFile|copyFile)/);
+  }
+});
+
+test("failure at final atomic rename leaves no eligible observation or automatic cleanup", (t) => {
+  const f = historyFixture(t);
+  const rename = fs.renameSync;
+  let attempts = 0;
+  fs.renameSync = (from, to) => {
+    if (to === path.join(f.historyRoot, ids[0], "observation.json")) { attempts++; throw new Error("SYNTHETIC_PRIVATE"); }
+    return rename(from, to);
+  };
+  let result;
+  try { result = syntheticRunner(syntheticReport(), f.store(), ids[0]); }
+  finally { fs.renameSync = rename; }
+  assert.equal(result.exitCode, 2);
+  assert.equal(attempts, 1);
+  assert.deepEqual(fs.readdirSync(path.join(f.historyRoot, ids[0])).sort(), ["observation.json.tmp", "report.txt"]);
+  const store = f.store(); store.initialize();
+  assert.equal(store.select("2026-09-11T07:00:00.000Z", approved).previous, null);
+});
+
+test("latest timestamp tie withholds history; older ties do not hide a unique latest record", (t) => {
+  const f = historyFixture(t);
+  syntheticRunner(syntheticReport(), f.store(), ids[0]);
+  syntheticRunner(syntheticReport(), f.store(), ids[1]);
+  const store = f.store(); store.initialize();
+  assert.throws(() => store.select("2026-09-11T07:00:00.000Z", approved));
+  const newer = history.makeObservation(syntheticReport(approved.metrics, "2026-09-10T08:00:00.000Z"), ids[2], null);
+  fs.mkdirSync(path.join(f.historyRoot, ids[2]));
+  fs.writeFileSync(path.join(f.historyRoot, ids[2], "observation.json"), JSON.stringify(newer));
+  const next = f.store(); next.initialize();
+  assert.equal(next.select("2026-09-11T07:00:00.000Z", approved).previous.runId, ids[2]);
+});
+
+test("hard-linked and oversized observations fail history closed", (t) => {
+  const f = historyFixture(t);
+  syntheticRunner(syntheticReport(), f.store(), ids[0]);
+  const file = path.join(f.historyRoot, ids[0], "observation.json");
+  fs.linkSync(file, path.join(f.root, "synthetic-linked.json"));
+  const store = f.store(); store.initialize();
+  assert.throws(() => store.select("2026-09-11T07:00:00.000Z", approved));
+  const g = historyFixture(t);
+  fs.mkdirSync(path.join(g.historyRoot, ids[0]));
+  fs.writeFileSync(path.join(g.historyRoot, ids[0], "observation.json"), " ".repeat(65537));
+  const other = g.store(); other.initialize();
+  assert.throws(() => other.select("2026-09-11T07:00:00.000Z", approved));
+});
+
+test("missing baseline withholds Previous and writes report only", (t) => {
+  const f = historyFixture(t);
+  const report = syntheticReport();
+  report.approvedBaseline = null; report.baseline = "NOT AVAILABLE"; report.status = "ATTENTION";
+  const result = syntheticRunner(report, f.store());
+  assert.equal(result.exitCode, 0);
+  assert.match(result.output, /REPORT ONLY \/ INELIGIBLE/);
+  assert.equal(fs.existsSync(path.join(f.historyRoot, ids[0], "observation.json")), false);
+});
+
+test("fixed external parent is never automatically created and incomplete runs changing are detected", (t) => {
+  const f = historyFixture(t);
+  const missingParent = new history.HistoryStore(path.join(f.root, "absent-parent", "history"));
+  assert.throws(() => missingParent.initialize());
+  assert.equal(fs.existsSync(path.join(f.root, "absent-parent")), false);
+  fs.mkdirSync(path.join(f.historyRoot, ids[0]));
+  const store = f.store(); store.initialize(); store.select("2026-09-11T07:00:00.000Z", approved);
+  fs.writeFileSync(path.join(f.historyRoot, ids[0], "observation.json"), JSON.stringify(history.makeObservation(syntheticReport(), ids[0], null)));
+  assert.throws(() => store.verify());
+});
+
+test("injected real-shaped synthetic collection transport is accepted without repository writes", (t) => {
+  const f = fixture(t);
+  const report = collect({ ...f, readGit: () => ({ ...f.readGit(), commit: "b".repeat(40) }) });
+  const transported = history.acceptTransport(JSON.stringify(report), exitCodeFor(report.status));
+  assert.equal(transported.metrics.products, 1);
+  assert.equal(transported.git.state, "CLEAN");
+  assert.equal(history.eligible(transported), true);
+});
+
+test("a new proxy increase below baseline is NEW; history review requires action even on PASS", () => {
+  const prior = { ...approved.metrics, shortBlogDescriptionsUnder200Characters: 100 };
+  const current = { ...approved.metrics, shortBlogDescriptionsUnder200Characters: 101 };
+  const row = history.comparePrevious(current, approved.metrics, { metrics: prior }).rows.find((r) => r.metric === "shortBlogDescriptionsUnder200Characters");
+  assert.equal(row.status, "ATTENTION");
+  assert.equal(row.persistence, "NEW");
+  const report = syntheticReport();
+  const text = runner.outputFor(report, history.operationsQueue(report.comparison, report.git, true), "GAPS", 1, 0);
+  assert.match(text, /Action required: YES/);
+  assert.doesNotMatch(text, /Action required: NO/);
+});
+
+test("history budget begins after collection rather than store construction", (t) => {
+  const f = historyFixture(t);
+  const store = f.store(); store.started = 0;
+  assert.doesNotThrow(() => store.initialize());
+  store.started = 0;
+  assert.throws(() => store.select("2026-09-11T07:00:00.000Z", approved));
+});
+
+test("unexpected native exit remains visible and critical native exit retains precedence", () => {
+  for (const native of [1, 4]) {
+    const result = runner.run({ execute: () => ({ status: native, stdout: "invalid" }), store: {} });
+    assert.equal(result.exitCode, native === 4 ? 4 : 2);
+    assert.match(result.output, new RegExp(`Native collector exit code: ${native}`));
+    assert.match(result.output, native === 4 ? /CRITICAL STOP/ : /BLOCKED/);
+  }
 });

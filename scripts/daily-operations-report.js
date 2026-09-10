@@ -9,7 +9,7 @@ const { execFileSync } = require("node:child_process");
 const ROOT = "C:\\Projects\\globalplcparts";
 const BASELINE_PATH = "automation/baselines/GPLP-AUTO-002-baseline-v1-revision-2.json";
 const BASELINE_DIGEST = "aa98cce84169c6ff12207246214e4c56a384422f27579c520d750d8586c104f9";
-const VERSION = Object.freeze({ schema: 2, collector: 2 });
+const VERSION = Object.freeze({ schema: 3, collector: 3 });
 const POLICY = Object.freeze({
   blocking: Object.freeze(["missingProductFields", "duplicateProductSlugGroups", "missingImageRecords", "missingLocalImageRecords", "missingBlogFields", "duplicateBlogSlugGroups", "invalidBlogDates", "missingPublicRoutes"]),
   advisory: Object.freeze(["missingBrandSlug", "missingDescriptions", "inconsistentBrandSlugGroups"]),
@@ -44,7 +44,7 @@ const ERRORS = Object.freeze({
   DIRTY: "Working changes extend beyond the reviewed Stage 1 implementation files.",
   SENSITIVE: "Potential sensitive material was detected; input details were suppressed.",
   LIMIT: "Collection exceeded its resource limit; no retry attempted.",
-  ARGUMENT: "Command arguments are not supported in manual Stage 2.",
+  ARGUMENT: "Only the fixed JSON transport flag is supported; arbitrary paths are prohibited.",
   BASELINE: "Baseline evidence is malformed, altered or does not match the approved identity.",
   COMPAT: "Baseline schema or collector version is incompatible; comparison was withheld.",
 });
@@ -249,7 +249,7 @@ function validateBaseline(source) {
       b.gitEligibility.changedPaths !== 0 || b.gitEligibility.branchClass !== "MAIN" || b.nativeExitCode !== 0) stop("BASELINE");
   validateMetrics(b.metrics, "BASELINE");
   if (!Number.isSafeInteger(b.schemaVersion) || b.schemaVersion < 1 || !Number.isSafeInteger(b.collectorVersion) || b.collectorVersion < 1) stop("BASELINE");
-  // Only evidence 1/1 -> current report/collector 2/2 is explicitly supported.
+  // Only evidence 1/1 -> current report/collector 3/3 is explicitly supported.
   if (b.schemaVersion !== 1 || b.collectorVersion !== 1) stop("COMPAT");
   if (hash(canonical(b)) !== BASELINE_DIGEST) stop("BASELINE");
   return b;
@@ -392,10 +392,12 @@ function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {} }
     const afterGit = readGit(root);
     if (git.fingerprint !== afterGit.fingerprint) stop("CHANGED");
     snapshot.budget();
-    report.git = { state: git.changedPaths ? "DIRTY" : "CLEAN", changedPaths: git.changedPaths, branch: git.branch };
+    report.git = { state: git.changedPaths ? "DIRTY" : "CLEAN", changedPaths: git.changedPaths, branch: git.branch, head: git.commit };
+    report.repository = ROOT;
+    report.approvedBaseline = approved;
     report.status = statusOf(compared.status, git.changedPaths || git.branch !== "MAIN" ? "ATTENTION" : "PASS");
     report.comparison = compared.rows;
-    report.coverage = "COMPLETE WITHIN STAGE 2";
+    report.coverage = "COMPLETE WITHIN STAGE 3";
   } catch (error) {
     const code = error instanceof Stop && Object.hasOwn(ERRORS, error.code) ? error.code : "INPUT";
     report.status = code === "SENSITIVE" ? "CRITICAL STOP" : "BLOCKED";
@@ -410,20 +412,20 @@ function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {} }
 
 function render(report) {
   // All strings below originate in reviewed code. No raw input or error strings are rendered.
-  const lines = ["GlobalPLCParts Codex Operations", "Task ID: GPLP-AUTO-002", "Stage: 2 / MANUAL ONLY / Class A / STDOUT ONLY",
+  const lines = ["GlobalPLCParts Codex Operations", "Task ID: GPLP-AUTO-002", "Stage: 3 / MANUAL ONLY / Class A / COLLECTOR STDOUT ONLY",
     `Status: ${report.status}`, `Coverage: ${report.coverage}`, `Baseline: ${report.baseline}`,
-    "Schema / collector version: 2 / 2", "Metric definitions: GPLP-AUTO-002-stage1-metrics-v1",
+    "Schema / collector version: 3 / 3", "Metric definitions: GPLP-AUTO-002-stage1-metrics-v1",
     "Baseline reference: GPLP-AUTO-002-baseline-v1 revision 2; evidence schema/collector 1/1",
-    "Previous: NOT AVAILABLE — HISTORY DEFERRED",
+    `Previous: ${report.previousLabel || "NOT AVAILABLE — DIRECT COLLECTOR HAS NO HISTORY ACCESS"}`,
     "Validation: lint NOT RUN; health-check NOT RUN; build NOT RUN",
     "AUTO-001: NOT INVOKED; existing reports NOT READ"];
   if (report.timestampUTC) lines.push(`Timestamp UTC: ${report.timestampUTC}`);
   if (report.failure) lines.push(`Stop: ${ERRORS[report.failure]}`);
   if (report.git) lines.push(`Git state: ${report.git.state}; changed paths: ${report.git.changedPaths}; branch class: ${report.git.branch}`);
-  lines.push("Metric | Unit | Current | Previous | Approved Baseline | Delta vs Previous | Delta vs Baseline | Classification");
+  lines.push("Metric | Unit | Current | Previous | Approved Baseline | Delta vs Previous | Delta vs Baseline | Classification | Persistence");
   for (const row of report.comparison || []) {
     const delta = row.deltaBaseline === null ? "N/A" : row.deltaBaseline > 0 ? "+" + row.deltaBaseline : String(row.deltaBaseline);
-    lines.push(`${row.metric} | ${row.unit} | ${row.current} | N/A / HISTORY DEFERRED | ${row.baseline ?? "N/A"} | N/A / HISTORY DEFERRED | ${delta} | ${row.status}: ${row.classification}${row.unroundedRateChanged ? " (underlying rate changed below display precision)" : ""}`);
+    lines.push(`${row.metric} | ${row.unit} | ${row.current} | ${row.previous ?? "N/A"} | ${row.baseline ?? "N/A"} | ${row.deltaPrevious ?? "N/A"} | ${delta} | ${row.status}: ${row.classification}${row.unroundedRateChanged || row.previousUnroundedRateChanged ? " (underlying rate changed below display precision)" : ""} | ${row.persistence || "NOT COMPARABLE"}`);
   }
   lines.push("Prioritized human-reviewed next actions:");
   for (const [i, f] of report.findings.entries()) lines.push(`${i + 1}. ${f.id} | ${f.severity} | ${f.evidence} | Action required: YES | Class A review; approval required | ${f.action}`);
@@ -432,16 +434,17 @@ function render(report) {
     "Automatic actions: observation and reporting only", "Automatic repairs: NONE", "Repository writes: NONE",
     "Production changes: NONE", "External services accessed: NONE", "Scheduler changes: NONE",
     "Environment/credential/customer stores accessed: NONE",
-    report.status !== "PASS" ? "Action required: YES; human review only" : "Action required: NO; accepted observations remain visible");
+    report.status !== "PASS" || report.reviewRequired ? "Action required: YES; human review only" : "Action required: NO; accepted observations remain visible");
   return lines.join("\n") + "\n";
 }
 
 if (require.main === module) {
-  const report = process.argv.length === 2 ? collect() : {
+  const json = process.argv.length === 3 && process.argv[2] === "--json";
+  const report = process.argv.length === 2 || json ? collect() : {
     status: "BLOCKED", coverage: "PARTIAL", baseline: "NOT AVAILABLE", failure: "ARGUMENT", metrics: {}, findings: [], comparison: [],
   };
-  process.stdout.write(render(report));
+  process.stdout.write(json ? JSON.stringify(report) + "\n" : render(report));
   process.exitCode = exitCodeFor(report.status);
 }
 
-module.exports = { collect, render, TEXT_INPUTS, ROUTES, BASELINE_PATH, POLICY, METRIC_KEYS, validateBaseline, compareMetrics, statusOf, exitCodeFor };
+module.exports = { collect, render, TEXT_INPUTS, ROUTES, BASELINE_PATH, POLICY, METRIC_KEYS, validateBaseline, compareMetrics, statusOf, exitCodeFor, validateMetrics, parseBaselineJSON, checkedPath, canonical, exactKeys, ROOT, VERSION };
