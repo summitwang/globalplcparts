@@ -1,5 +1,136 @@
 # GPLP-AUTO-002 — Daily Operations Report
 
+## Stage 2 current implementation contract
+
+Stage 2 minimal baseline comparison was explicitly authorized by the human on
+2026-09-09. It implements **Current vs Approved Baseline only**, Class A, local-only,
+manual-only and stdout-only. Previous always displays
+`NOT AVAILABLE — HISTORY DEFERRED`; Previous and Delta vs Previous cells display
+`N/A / HISTORY DEFERRED`. No operational history or scheduler is created.
+
+This section governs the current implementation. The Stage 1 reference below
+preserves historical behavior and the original human baseline approval/evidence;
+its statements about comparison being unimplemented describe that earlier stage.
+The baseline approval and all 42 approved values remain unchanged.
+
+### Fixed baseline artifact and approval boundary
+
+Only this additional repository input may be read:
+
+`automation/baselines/GPLP-AUTO-002-baseline-v1-revision-2.json`
+
+The artifact is the exact transcription of the approved metric table below, with
+baseline format 1, task GPLP-AUTO-002, baseline ID GPLP-AUTO-002-baseline-v1,
+revision 2, APPROVED / ACTIVE INITIAL BASELINE, evidence timestamp
+2026-09-07T07:27:51.184Z, source commit
+ee6582e77001d2b9f09134e06a94c13a543f46e7, schema/collector 1/1, CLEAN/0/MAIN,
+native exit 0 and metric definition ID `GPLP-AUTO-002-stage1-metrics-v1`.
+
+The collector opens this exact file as UTF-8 data, never as a module. It does not
+scan the baseline directory, discover a latest file, accept a baseline CLI path,
+or create/replace any artifact. Runtime remains write-free. Artifact creation is
+an explicitly authorized implementation change, not an automatic baseline update.
+
+The file is capped at 64 KiB. Validation rejects malformed JSON, duplicate keys
+(including escaped/nested duplicates), excessive nesting, unexpected/missing
+metadata or metrics, nonnumeric/nonfinite/negative/fractional counts, invalid
+percentage/marker ranges, inconsistent rate values, wrong identity/revision/
+approval/source commit/timestamp/definition ID and invalid Git/native-exit evidence.
+The reviewed canonical-content SHA-256 is pinned in the collector:
+
+`aa98cce84169c6ff12207246214e4c56a384422f27579c520d750d8586c104f9`
+
+Canonicalization recursively sorts object keys and uses JSON primitive encoding;
+formatting and key order do not change the approved values. This digest detects
+altered approved content, but is not an OS security boundary or an independent
+approval authority. The file receives the same ancestor/symlink/path checks and
+before/after fingerprint verification as other inputs. It is never writable by
+the collector. Future revisions still need separate explicit human approval.
+
+### Versions and compatibility
+
+Current report schema: **2**. Current collector version: **2**.
+Baseline evidence remains schema **1**, collector **1**; it is not relabeled.
+The sole authorized compatibility mapping is evidence schema/collector **1/1**
+to report/collector **2/2**, using `GPLP-AUTO-002-stage1-metrics-v1`.
+All 42 collection calculations, grouping rules, thresholds and units are unchanged.
+Comparison classifications and report layout are new behavior, hence version 2.
+
+Positive integer but unsupported evidence schema/collector versions are rejected
+for comparison as INCOMPATIBLE / ATTENTION; no deltas are computed from them.
+Malformed version fields are BLOCKED. No generic version fallback or migration
+exists. Missing baseline means NOT AVAILABLE / ATTENTION, with current integrity
+checks still enforced. A malformed or altered baseline is BLOCKED, not a substitute
+zero baseline. The approved historical source commit need not equal current HEAD;
+a change to current HEAD during collection remains BLOCKED.
+
+### Comparison and status semantics
+
+Each of the exact 42 keys appears in one policy class. Blocking integrity contains
+the eight zero-required metrics listed below. Advisory integrity contains the
+three consistency/completeness counts. Quality proxies contain duplicate-description,
+duplicate-title, short-description and image-count/rate metrics; distinctBlogDates
+is a separate date proxy. Inventory, script inventory and SEO markers remain
+separate policy classes. No metric is newly classified as an integrity failure.
+
+| Condition | Result |
+| --- | --- |
+| Blocking integrity count above zero; products or blogs zero | BLOCKED, regardless of baseline availability |
+| Advisory integrity or quality proxy increase | ATTENTION, human review only |
+| Advisory decrease | PASS row, advisory count reduction |
+| Quality proxy decrease | PASS row, PROXY REDUCTION ONLY; no verified-quality claim |
+| Equal approved value | PASS row, ACCEPTED OBSERVATION / UNCHANGED; no new incident |
+| Inventory, script inventory, distinct blog dates or SEO marker change in either direction | ATTENTION |
+| Complete stable clean MAIN observation, compatible baseline, no attention/blocking rows | PASS overall |
+| Known reviewed Stage 1 implementation-path changes | ATTENTION; not clean-tree baseline eligible |
+| Unknown dirty paths, including an untracked/modified baseline artifact | BLOCKED; no cleanup or allowlist expansion |
+| Stable non-MAIN or detached HEAD | ATTENTION; MAIN comparison withheld, current integrity checks retained |
+| Branch/HEAD or input changes during collection | BLOCKED; discard partial metrics/comparisons; no retry |
+| Secret marker / sensitive-data stop | CRITICAL STOP; suppress partial metrics/comparisons |
+
+Overall precedence is CRITICAL STOP > BLOCKED > ATTENTION > PASS.
+Native exits: PASS 0, ATTENTION 0, BLOCKED 2, CRITICAL STOP 4.
+Proxy changes alone never cause BLOCKED. Invalid evidence structure/ranges are
+validation failures, not proxy regressions. Existing approved nonzero values remain
+visible without repeated action-required findings. Only changed/blocked rows and
+baseline/Git review conditions produce proposed human actions.
+
+Rows contain Metric, Unit, Current, Previous, Approved Baseline, Delta vs Previous,
+Delta vs Baseline and Classification. Counts use signed subtraction; rate metrics
+use percentage-point deltas rounded to two decimals. Direction of rate changes
+uses exact integer cross-products of numerators and product denominators. A rate
+change below display precision is explicitly flagged even if displayed delta is
+zero. Absolute count increases remain independently visible. No relative percent
+change is substituted. A zero denominator with an empty catalog yields BLOCKED.
+
+### Execution, validation and remaining limits
+
+The entry point remains `node scripts/daily-operations-report.js`, without arguments.
+It is **not executed as part of implementation acceptance**. The real acceptance
+run requires separate authorization and the repository-owning Windows account,
+with native exit-code forwarding. No Git ownership exception is added. The fixed
+Git commands and literal child environment remain unchanged.
+
+Only `node --test tests/daily-operations-report.test.js` is run for implementation
+validation. Tests use temporary synthetic trees, mock Git observations and pure
+metric comparisons. Synthetic Node subprocesses test native exit mapping by module
+import only, without collecting repository data or invoking Git. Tests also compare
+the baseline artifact to all 42 documented approved values. They do not call
+AUTO-001, lint, build, validate or any high-risk script.
+
+Only the collector, its dedicated tests and this contract are modified; only the
+fixed JSON artifact is created. No dependencies, application/business data, AUTO-001,
+Git/Windows configuration or scheduler are changed. No external service, secrets,
+credentials, customer/RFQ data, quotations, payments or supplier actions are permitted.
+No automatic repair, baseline advancement, history, commit, push or deployment.
+
+The original filesystem race/resource limitations below remain applicable. Static
+markers and image metadata do not prove live-site behavior, image relevance or
+licensing. A separately authorized clean-tree manual run remains required before
+operational acceptance; passing synthetic tests does not establish live readiness.
+
+## Stage 1 reference (historical behavior and approved baseline evidence)
+
 ## Authority and Stage 1 status
 
 Class A, local-only, stdout-only, **MANUAL ONLY**. Implementation and one manual

@@ -7,6 +7,20 @@ const crypto = require("node:crypto");
 const { execFileSync } = require("node:child_process");
 
 const ROOT = "C:\\Projects\\globalplcparts";
+const BASELINE_PATH = "automation/baselines/GPLP-AUTO-002-baseline-v1-revision-2.json";
+const BASELINE_DIGEST = "aa98cce84169c6ff12207246214e4c56a384422f27579c520d750d8586c104f9";
+const VERSION = Object.freeze({ schema: 2, collector: 2 });
+const POLICY = Object.freeze({
+  blocking: Object.freeze(["missingProductFields", "duplicateProductSlugGroups", "missingImageRecords", "missingLocalImageRecords", "missingBlogFields", "duplicateBlogSlugGroups", "invalidBlogDates", "missingPublicRoutes"]),
+  advisory: Object.freeze(["missingBrandSlug", "missingDescriptions", "inconsistentBrandSlugGroups"]),
+  proxy: Object.freeze(["duplicateDescriptionGroups", "duplicateBlogTitleGroups", "shortBlogDescriptionsUnder200Characters", "remoteImageRecords", "svgImageRecords", "heavilyReusedImagePaths", "productsOnHeavilyReusedPaths", "maximumImageReuse", "svgImagePercent", "heavyReuseProductPercent"]),
+  dateProxy: Object.freeze(["distinctBlogDates"]),
+  inventory: Object.freeze(["products", "brands", "categories", "blogs", "blogCategories", "uniqueImagePaths"]),
+  scriptInventory: Object.freeze(["scriptFiles", "filenameRiskHeuristic", "registryHighRiskScripts", "scriptsWithoutRegistryRows", "missingDirectNodeEntryPoints", "checkImagesKeyOccurrences"]),
+  seo: Object.freeze(["detailPagesWithMetadataMarker", "detailPagesWithCanonicalMarker", "detailPagesWithStructuredDataMarker", "layoutMetadataMarker", "sitemapCatalogMarker", "sitemapBlogMarker", "sitemapCurrentDateMarker", "robotsSitemapMarker"]),
+});
+const METRIC_KEYS = Object.freeze(Object.values(POLICY).flat());
+const RATE_NUMERATORS = Object.freeze({ svgImagePercent: "svgImageRecords", heavyReuseProductPercent: "productsOnHeavilyReusedPaths" });
 const TEXT_INPUTS = Object.freeze([
   "data/products.json", "data/blog-posts.ts", "package.json",
   "docs/SCRIPTS-SAFETY-REGISTRY.md", "app/layout.tsx",
@@ -30,7 +44,9 @@ const ERRORS = Object.freeze({
   DIRTY: "Working changes extend beyond the reviewed Stage 1 implementation files.",
   SENSITIVE: "Potential sensitive material was detected; input details were suppressed.",
   LIMIT: "Collection exceeded its resource limit; no retry attempted.",
-  ARGUMENT: "Command arguments are not supported in manual Stage 1.",
+  ARGUMENT: "Command arguments are not supported in manual Stage 2.",
+  BASELINE: "Baseline evidence is malformed, altered or does not match the approved identity.",
+  COMPAT: "Baseline schema or collector version is incompatible; comparison was withheld.",
 });
 class Stop extends Error {
   constructor(code) { super(code); this.code = code; }
@@ -80,7 +96,7 @@ class Snapshot {
     }
     if (!stat.isFile()) stop("INPUT");
     if (mode === "metadata") return { stamp: signature(stat), value: true };
-    if (stat.size > 32n * 1024n * 1024n) stop("INPUT");
+    if (stat.size > (relative === BASELINE_PATH ? 65536n : 32n * 1024n * 1024n)) stop("INPUT");
     const fd = fs.openSync(file, "r");
     try {
       if (signature(fs.fstatSync(fd, { bigint: true })) !== signature(stat)) stop("CHANGED");
@@ -93,7 +109,7 @@ class Snapshot {
     } finally { fs.closeSync(fd); }
   }
   read(relative, mode = "text") {
-    const allowed = mode === "text" ? TEXT_INPUTS.includes(relative)
+    const allowed = mode === "text" ? TEXT_INPUTS.includes(relative) || relative === BASELINE_PATH
       : mode === "directory" ? relative === "scripts"
         : ROUTES.includes(relative) || /^public\/product-images\/[A-Za-z0-9_ .()/+-]+\.(?:svg|png|jpe?g|webp|gif|avif)$/i.test(relative);
     if (!allowed) stop("PATH");
@@ -101,7 +117,7 @@ class Snapshot {
     if (this.entries.has(key)) return this.entries.get(key).value;
     const captured = this.capture(relative, mode);
     this.entries.set(key, { relative, mode, ...captured });
-    if (mode !== "metadata" && captured.value === null) stop("INPUT");
+    if (mode !== "metadata" && relative !== BASELINE_PATH && captured.value === null) stop("INPUT");
     return captured.value;
   }
   verify() {
@@ -169,16 +185,134 @@ const duplicates = (rows, key) => [...groups(rows, key).values()].filter((n) => 
 const incomplete = (rows, keys) => rows.filter((r) => keys.some((k) => !r[k]?.trim())).length;
 const percent = (n, total) => total ? Math.round(n / total * 10000) / 100 : 0;
 
-function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {}, baseline = null } = {}) {
-  const report = { task: "GPLP-AUTO-002", schema: 1, collectorVersion: 1,
+const canonical = (value) => value && typeof value === "object" && !Array.isArray(value)
+  ? "{" + Object.keys(value).sort().map((key) => JSON.stringify(key) + ":" + canonical(value[key])).join(",") + "}"
+  : JSON.stringify(value);
+const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
+  Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
+
+function parseBaselineJSON(source) {
+  // JSON.parse verifies grammar; this separate token walk rejects duplicate keys,
+  // including escaped spellings and nested objects. No reviver/evaluation/import.
+  try {
+    if (typeof source !== "string" || Buffer.byteLength(source) > 65536) stop("BASELINE");
+    const value = JSON.parse(source);
+    const tokens = source.match(/"(?:\\[\s\S]|[^"\\])*"|[{}\[\]:,]|true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g) || [];
+    let index = 0;
+    function walk(depth) {
+      if (depth > 32) stop("BASELINE");
+      const token = tokens[index++];
+      if (token === "{") {
+        const seen = new Set();
+        if (tokens[index] !== "}") {
+          do {
+            const key = JSON.parse(tokens[index++]);
+            if (seen.has(key)) stop("BASELINE");
+            seen.add(key);
+            index++; // colon (grammar already validated)
+            walk(depth + 1);
+          } while (tokens[index] === "," && ++index);
+        }
+        index++;
+      } else if (token === "[") {
+        if (tokens[index] !== "]") do { walk(depth + 1); } while (tokens[index] === "," && ++index);
+        index++;
+      }
+    }
+    walk(0);
+    if (index !== tokens.length) stop("BASELINE");
+    return value;
+  } catch { stop("BASELINE"); }
+}
+
+function validateMetrics(metrics, code = "INPUT") {
+  if (!exactKeys(metrics, METRIC_KEYS)) stop(code);
+  for (const key of METRIC_KEYS) {
+    const n = metrics[key];
+    if (typeof n !== "number" || !Number.isFinite(n) || n < 0 ||
+        (Object.hasOwn(RATE_NUMERATORS, key) ? n > 100 : !Number.isSafeInteger(n))) stop(code);
+  }
+  for (const key of POLICY.seo) if (metrics[key] > (key.startsWith("detailPages") ? 3 : 1)) stop(code);
+  if (metrics.missingPublicRoutes > 5) stop(code);
+  for (const [key, numerator] of Object.entries(RATE_NUMERATORS)) {
+    if (metrics[numerator] > metrics.products || metrics[key] !== percent(metrics[numerator], metrics.products)) stop(code);
+  }
+}
+
+function validateBaseline(source) {
+  const b = parseBaselineJSON(source);
+  if (!exactKeys(b, ["baselineFormatVersion", "taskId", "baselineId", "revision", "approvalStatus", "evidenceTimestamp", "sourceCommit", "schemaVersion", "collectorVersion", "metricDefinitionId", "gitEligibility", "nativeExitCode", "metrics"]) ||
+      b.baselineFormatVersion !== 1 || b.taskId !== "GPLP-AUTO-002" || b.baselineId !== "GPLP-AUTO-002-baseline-v1" || b.revision !== 2 ||
+      b.approvalStatus !== "APPROVED / ACTIVE INITIAL BASELINE" || b.evidenceTimestamp !== "2026-09-07T07:27:51.184Z" ||
+      b.sourceCommit !== "ee6582e77001d2b9f09134e06a94c13a543f46e7" || b.metricDefinitionId !== "GPLP-AUTO-002-stage1-metrics-v1" ||
+      !exactKeys(b.gitEligibility, ["state", "changedPaths", "branchClass"]) || b.gitEligibility.state !== "CLEAN" ||
+      b.gitEligibility.changedPaths !== 0 || b.gitEligibility.branchClass !== "MAIN" || b.nativeExitCode !== 0) stop("BASELINE");
+  validateMetrics(b.metrics, "BASELINE");
+  if (!Number.isSafeInteger(b.schemaVersion) || b.schemaVersion < 1 || !Number.isSafeInteger(b.collectorVersion) || b.collectorVersion < 1) stop("BASELINE");
+  // Only evidence 1/1 -> current report/collector 2/2 is explicitly supported.
+  if (b.schemaVersion !== 1 || b.collectorVersion !== 1) stop("COMPAT");
+  if (hash(canonical(b)) !== BASELINE_DIGEST) stop("BASELINE");
+  return b;
+}
+
+function statusOf(...statuses) {
+  const order = ["PASS", "ATTENTION", "BLOCKED", "CRITICAL STOP"];
+  return order[Math.max(0, ...statuses.map((s) => order.indexOf(s)))];
+}
+const exitCodeFor = (status) => ({ PASS: 0, ATTENTION: 0, BLOCKED: 2, "CRITICAL STOP": 4 })[status] ?? 2;
+
+function compareMetrics(current, baselineMetrics) {
+  validateMetrics(current);
+  if (baselineMetrics) validateMetrics(baselineMetrics, "BASELINE");
+  const rows = [];
+  for (const [group, keys] of Object.entries(POLICY)) for (const metric of keys) {
+    const value = current[metric];
+    const base = baselineMetrics ? baselineMetrics[metric] : null;
+    const rate = Object.hasOwn(RATE_NUMERATORS, metric);
+    const delta = base === null ? null : rate ? Number((value - base).toFixed(2)) : value - base;
+    let direction = delta === null ? 0 : Math.sign(delta);
+    if (rate && baselineMetrics && current.products && baselineMetrics.products) {
+      const numerator = RATE_NUMERATORS[metric];
+      const difference = BigInt(current[numerator]) * BigInt(baselineMetrics.products) - BigInt(baselineMetrics[numerator]) * BigInt(current.products);
+      direction = difference > 0n ? 1 : difference < 0n ? -1 : 0;
+    }
+    let status = base === null ? "ATTENTION" : "PASS";
+    let classification = base === null ? "COMPARISON UNAVAILABLE" : "ACCEPTED OBSERVATION / UNCHANGED";
+    if ((group === "blocking" && value > 0) || ((metric === "products" || metric === "blogs") && value === 0)) {
+      status = "BLOCKED"; classification = "VERIFIED LOCAL INTEGRITY FAILURE";
+    } else if (base !== null && direction !== 0) {
+      if (group === "proxy" || group === "advisory") {
+        status = direction > 0 ? "ATTENTION" : "PASS";
+        classification = direction > 0 ? "INCREASE / HUMAN REVIEW" : group === "proxy" ? "PROXY REDUCTION ONLY" : "ADVISORY COUNT REDUCTION";
+      } else {
+        status = "ATTENTION"; classification = "CHANGE / HUMAN REVIEW";
+      }
+    }
+    rows.push({ metric, group, unit: rate ? "percent (delta: pp)" : "count", current: value,
+      previous: null, baseline: base, deltaPrevious: null, deltaBaseline: delta, status, classification,
+      unroundedRateChanged: rate && direction !== 0 && delta === 0 });
+  }
+  return { rows, status: statusOf(baselineMetrics ? "PASS" : "ATTENTION", ...rows.map((r) => r.status)) };
+}
+
+function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {} } = {}) {
+  const report = { task: "GPLP-AUTO-002", schema: VERSION.schema, collectorVersion: VERSION.collector,
     timestampUTC: new Date().toISOString(), status: "ATTENTION", coverage: "PARTIAL",
-    baseline: baseline === null ? "NOT ESTABLISHED" : "INCOMPATIBLE",
-    findings: [], metrics: {} };
+    baseline: "NOT AVAILABLE", findings: [], metrics: {}, comparison: [] };
   const finding = (id, severity, evidence, action) => report.findings.push({ id, severity, evidence, actionRequired: true, action, autonomy: "A", approvalRequired: true });
   try {
     const snapshot = new Snapshot(root);
     const git = readGit(root);
     if (!git.understood) stop("DIRTY");
+    let approved = null;
+    const baselineSource = snapshot.read(BASELINE_PATH);
+    if (baselineSource !== null) {
+      try { approved = validateBaseline(baselineSource); report.baseline = "APPROVED / ACTIVE INITIAL BASELINE"; }
+      catch (error) {
+        if (!(error instanceof Stop) || error.code !== "COMPAT") throw error;
+        report.baseline = "INCOMPATIBLE";
+      }
+    }
     const products = parseRows(snapshot.read("data/products.json"));
     const posts = parseRows(snapshot.read("data/blog-posts.ts"), true);
     const m = report.metrics;
@@ -247,18 +381,11 @@ function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {}, 
     }).length;
     // Count a known raw-source ambiguity, without treating JSON.parse as duplicate-aware.
     m.checkImagesKeyOccurrences = [...packageText.matchAll(/"check-images"\s*:/g)].length;
-    const failures = Number(m.products === 0) + Number(m.blogs === 0) + m.missingProductFields + m.duplicateProductSlugGroups + m.missingImageRecords +
-      m.missingLocalImageRecords + m.missingBlogFields + m.duplicateBlogSlugGroups + m.invalidBlogDates + m.missingPublicRoutes;
-    if (failures) finding("INTEGRITY", "HIGH", "VERIFIED LOCAL FAILURE", "Review missing fields, duplicate slugs, dates, image references or routes before proposing scoped repairs.");
-    if (m.scriptsWithoutRegistryRows || m.missingDirectNodeEntryPoints || m.checkImagesKeyOccurrences > 1)
-      finding("SCRIPT-INVENTORY", "MEDIUM", "STATIC INVENTORY", "Review registry coverage and package entry-point inconsistencies without executing scripts.");
-    if (m.svgImageRecords || m.heavilyReusedImagePaths || m.remoteImageRecords)
-      finding("IMAGE-REVIEW", "LOW", "QUALITY PROXY ONLY", "Review image relevance and fallback/reuse metrics; do not replace or acquire images.");
-    if (m.shortBlogDescriptionsUnder200Characters || m.duplicateBlogTitleGroups || m.distinctBlogDates < 3)
-      finding("CONTENT-REVIEW", "LOW", "QUALITY PROXY ONLY", "Review content depth, duplication and date provenance without publishing changes.");
-    if (m.detailPagesWithMetadataMarker < 3 || m.detailPagesWithCanonicalMarker < 3 || m.detailPagesWithStructuredDataMarker < 3 || m.sitemapCurrentDateMarker)
-      finding("SEO-REVIEW", "LOW", "SOURCE MARKERS ONLY", "Review metadata coverage and sitemap modification-date provenance; rendered SEO is unverified.");
-    finding("BASELINE", "LOW", report.baseline, "Review this inventory before approving a versioned baseline and any future trend storage.");
+    const compared = compareMetrics(m, git.branch === "MAIN" && approved ? approved.metrics : null);
+    if (compared.status === "BLOCKED") finding("INTEGRITY", "HIGH", "VERIFIED LOCAL FAILURE", "Review the blocking metric rows before proposing scoped repairs.");
+    if (compared.rows.some((r) => r.status === "ATTENTION" && r.baseline !== null)) finding("METRIC-CHANGES", "MEDIUM", "LOCAL METRIC DELTAS", "Review changed metric rows; quality proxies do not prove quality or authorize repair.");
+    if (!approved) finding("BASELINE", "LOW", report.baseline, "Review baseline availability or compatibility; do not replace or advance it automatically.");
+    if (git.branch !== "MAIN") finding("BRANCH", "LOW", "NON-MAIN BRANCH", "MAIN baseline comparison withheld; review branch context without changing Git state.");
     if (git.changedPaths) finding("GIT-REVIEW", "LOW", "KNOWN STAGE 1 PATHS ONLY", "Review the local implementation diff; do not commit or push automatically.");
     beforeVerify(); // Synthetic test seam only; never populated by the CLI.
     snapshot.verify();
@@ -266,12 +393,14 @@ function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {}, 
     if (git.fingerprint !== afterGit.fingerprint) stop("CHANGED");
     snapshot.budget();
     report.git = { state: git.changedPaths ? "DIRTY" : "CLEAN", changedPaths: git.changedPaths, branch: git.branch };
-    report.status = failures ? "BLOCKED" : "ATTENTION";
-    report.coverage = "COMPLETE WITHIN STAGE 1";
+    report.status = statusOf(compared.status, git.changedPaths || git.branch !== "MAIN" ? "ATTENTION" : "PASS");
+    report.comparison = compared.rows;
+    report.coverage = "COMPLETE WITHIN STAGE 2";
   } catch (error) {
     const code = error instanceof Stop && Object.hasOwn(ERRORS, error.code) ? error.code : "INPUT";
     report.status = code === "SENSITIVE" ? "CRITICAL STOP" : "BLOCKED";
     report.metrics = {};
+    report.comparison = [];
     report.findings = [];
     report.failure = code;
     report.message = ERRORS[code];
@@ -281,31 +410,38 @@ function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {}, 
 
 function render(report) {
   // All strings below originate in reviewed code. No raw input or error strings are rendered.
-  const lines = ["GlobalPLCParts Codex Operations", "Task ID: GPLP-AUTO-002", "Stage: 1 / MANUAL ONLY / Class A / STDOUT ONLY",
+  const lines = ["GlobalPLCParts Codex Operations", "Task ID: GPLP-AUTO-002", "Stage: 2 / MANUAL ONLY / Class A / STDOUT ONLY",
     `Status: ${report.status}`, `Coverage: ${report.coverage}`, `Baseline: ${report.baseline}`,
-    "Schema / collector version: 1 / 1", "Trends: NOT AVAILABLE; no approved baseline or history input",
+    "Schema / collector version: 2 / 2", "Metric definitions: GPLP-AUTO-002-stage1-metrics-v1",
+    "Baseline reference: GPLP-AUTO-002-baseline-v1 revision 2; evidence schema/collector 1/1",
+    "Previous: NOT AVAILABLE — HISTORY DEFERRED",
     "Validation: lint NOT RUN; health-check NOT RUN; build NOT RUN",
     "AUTO-001: NOT INVOKED; existing reports NOT READ"];
   if (report.timestampUTC) lines.push(`Timestamp UTC: ${report.timestampUTC}`);
   if (report.failure) lines.push(`Stop: ${ERRORS[report.failure]}`);
   if (report.git) lines.push(`Git state: ${report.git.state}; changed paths: ${report.git.changedPaths}; branch class: ${report.git.branch}`);
-  for (const [key, value] of Object.entries(report.metrics)) lines.push(`${key}: ${value}`);
+  lines.push("Metric | Unit | Current | Previous | Approved Baseline | Delta vs Previous | Delta vs Baseline | Classification");
+  for (const row of report.comparison || []) {
+    const delta = row.deltaBaseline === null ? "N/A" : row.deltaBaseline > 0 ? "+" + row.deltaBaseline : String(row.deltaBaseline);
+    lines.push(`${row.metric} | ${row.unit} | ${row.current} | N/A / HISTORY DEFERRED | ${row.baseline ?? "N/A"} | N/A / HISTORY DEFERRED | ${delta} | ${row.status}: ${row.classification}${row.unroundedRateChanged ? " (underlying rate changed below display precision)" : ""}`);
+  }
   lines.push("Prioritized human-reviewed next actions:");
   for (const [i, f] of report.findings.entries()) lines.push(`${i + 1}. ${f.id} | ${f.severity} | ${f.evidence} | Action required: YES | Class A review; approval required | ${f.action}`);
   lines.push("External evidence: NOT COLLECTED (Search Console, Analytics, hosting/Vercel, Cloudflare, Supabase, Resend, social platforms, live endpoints).",
     "Limits: source markers and image metadata do not prove runtime health, image relevance, licensing, indexing or factual accuracy.",
     "Automatic actions: observation and reporting only", "Automatic repairs: NONE", "Repository writes: NONE",
     "Production changes: NONE", "External services accessed: NONE", "Scheduler changes: NONE",
-    "Environment/credential/customer stores accessed: NONE", "Approval required: YES; human review only");
+    "Environment/credential/customer stores accessed: NONE",
+    report.status !== "PASS" ? "Action required: YES; human review only" : "Action required: NO; accepted observations remain visible");
   return lines.join("\n") + "\n";
 }
 
 if (require.main === module) {
   const report = process.argv.length === 2 ? collect() : {
-    status: "BLOCKED", coverage: "PARTIAL", baseline: "NOT ESTABLISHED", failure: "ARGUMENT", metrics: {}, findings: [],
+    status: "BLOCKED", coverage: "PARTIAL", baseline: "NOT AVAILABLE", failure: "ARGUMENT", metrics: {}, findings: [], comparison: [],
   };
   process.stdout.write(render(report));
-  process.exitCode = report.status === "CRITICAL STOP" ? 4 : report.status === "BLOCKED" ? 2 : 0;
+  process.exitCode = exitCodeFor(report.status);
 }
 
-module.exports = { collect, render, TEXT_INPUTS, ROUTES };
+module.exports = { collect, render, TEXT_INPUTS, ROUTES, BASELINE_PATH, POLICY, METRIC_KEYS, validateBaseline, compareMetrics, statusOf, exitCodeFor };
