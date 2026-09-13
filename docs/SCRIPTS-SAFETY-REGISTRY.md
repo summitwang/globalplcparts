@@ -1,5 +1,17 @@
 # GlobalPLCParts Scripts Safety Registry
 
+## Authorized complete Classic Automation workflow (September 2026)
+
+`scripts/classic-automation-complete-crawl.js` and its non-CLI adapter
+`scripts/classic-automation-source.js` are **HIGH-RISK NETWORK + MUTATION**.
+The user explicitly authorized their implementation, dedicated tests, controlled
+acceptance and periodic scheduling for the existing 17 Classic Automation brand
+paths. See [the complete-crawl contract](CLASSIC-COMPLETE-CRAWL.md) for exact
+commands, source requests, local write paths, dedupe, persistence, limits and
+activation evidence. This authorization does not extend to historical V18,
+other scraper families, catalog publication, commercial changes or deployment.
+Old V18 and its checkpoint remain historical reference only.
+
 ## Purpose and scope
 
 This registry is a static, repository-evidence-based inventory of every JavaScript file currently under `scripts/`. It is an operational safety reference, not authorization to run a script.
