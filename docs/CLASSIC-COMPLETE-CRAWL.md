@@ -218,3 +218,71 @@ in 20.546 seconds, adding three and skipping nine products (5,304 to 5,307).
 All previous records were preserved; duplicate identities and slugs were zero.
 The next checkpoint is generation 2 page 3, with no pending items. Runtime catalog
 and checkpoint changes are excluded from the fix commit.
+
+## Unattended completion lifecycle
+
+The existing CLI calls `classic-automation-lifecycle.js` after releasing its
+catalog lock. Acquisition logic, 17 targets, pacing, sweep policy, state schema,
+and task configuration are unchanged. No second task or acquisition runner is used.
+
+After every CLI batch, local progress is refreshed at
+`reports/classic-complete/status.md` and `status.json`. For a current local view:
+
+```powershell
+node scripts/classic-automation-lifecycle.js --status
+```
+
+This command only reads local catalog/state and the exact crawler task and writes
+derived local status reports. It never acquires products. Scheduler readings are
+timestamped snapshots; a report written by a scheduled process can correctly show
+Running and result 267009 until that process exits. An unavailable scheduler query
+is explicitly reported and never causes elevation. Active-run snapshots are marked
+non-transactional because catalog and cursor are committed separately.
+
+Only validated FULLY_COMPLETE state can finalize. The finalizer acquires the same
+exclusive catalog lock, deferring if an instance owns it, then revalidates all 17
+targets, two stable sweeps, consecutive successful generation evidence, source
+totals, no pending queue, no unresolved lastErrorCategory, catalog uniqueness,
+required identities, source scope and exact baseline preservation. failedRetryable
+and cumulativeFailures are historical counters: resolved failures are reported,
+not mistaken for unresolved failures. Source-disappeared products remain intact.
+
+New acquisitions retain strict product-URL scope. Twelve historical baseline rows
+currently contain public category/search references. Only exact preserved baseline
+objects may retain approved category links or a same-origin public search URL whose
+query is that record's brand/model. This does not authorize fetching those URLs or
+relax validation for new products. Their count is disclosed in final integrity data.
+
+Final artifacts are atomically published together, once per crawl ID, under
+`reports/classic-complete/<crawlId>/`:
+
+- `completion.json`: counts, per-brand totals/generations/timestamps, failure counters,
+  integrity, catalog/state hashes, scheduler snapshot and local Git commit when available.
+- `final-state.json`: full final sweep and completion evidence.
+- `summary.md`: concise human-readable completion summary.
+
+An interrupted staging directory is not a completion marker. The next invocation
+retries finalization. Existing reports/evidence are checked against current data;
+mismatches block instead of overwriting evidence. Reports never rewrite catalog or
+state. Runtime reports, staging artifacts and acquisition files stay out of commits.
+
+The task remains enabled with S4U and limited rights. Once FULLY_COMPLETE, the
+existing early exit performs zero acquisition network requests and zero catalog
+mutation; lifecycle validation/reporting stays local. Repeated successful finalization
+returns COMPLETE_NOOP. No task-disable command, elevation, deletion, push or deployment
+is performed. A report/validation failure is BLOCKED and exits nonzero, preserving
+completed state so subsequent retries remain network-free.
+
+Validation: `node --test tests/classic-complete-crawl.test.js tests/classic-lifecycle.test.js`.
+These standalone modules are not imported by the application and require no app build.
+The implementation passed 82 dedicated tests (57 crawler, 25 lifecycle), including
+the real CLI entry point against an isolated completed fixture with an adapter
+that throws if loaded. Repeat invocations finalized once, exited 0 and preserved
+catalog/state without network access.
+
+The read-only repository health check returned 13 PASS, 5 WARN, 1 FAIL during
+implementation: 354 local image references were missing/invalid at that snapshot.
+The pre-existing `/product-images/default.jpg` file is absent, including references
+already in the preserved baseline. This application-image issue is disclosed;
+it does not invalidate acquisition identities or finalization evidence. No image
+replacement, catalog rewrite, application build or deployment was performed.

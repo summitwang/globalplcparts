@@ -379,15 +379,17 @@ async function runBatch({ root = ROOT, source, maxItems = 600, maxPages = 50, ma
 module.exports = { ROOT, STATE_NAME, BRANDS, PAGE_SIZE, fail, digest, norm, key, atomic, acquire, initialState, validateState, validateLegacyState, migrateLegacy, finishSweep, setHash, validateCatalog, pageResult, normalizeImageUrl, productFrom, runBatch };
 if (require.main === module) {
   const report = result => {
-    const output = { timestamp: new Date().toISOString(), ...result };
+    // runBatch has released the mutation lock before local lifecycle reporting.
+    const output = require("./classic-automation-lifecycle").afterBatch(result);
     atomic(path.join(ROOT, "data/classic-complete-last-run.json"), output, value => { if (!value.status) fail("REPORT_INVALID"); });
     console.log(JSON.stringify(output));
+    return output;
   };
   const mode = process.argv.slice(2);
   if (mode.length !== 1 || !["--batch", "--controlled"].includes(mode[0])) {
     console.error("Use --controlled (12 items/1 page) or --batch (600 items/50 pages/8 minutes)."); process.exitCode = 2;
   } else runBatch(mode[0] === "--controlled" ? { maxItems: 12, maxPages: 1, maxMs: 120000 } : {})
-    .then(result => { report(result); process.exitCode = result.status === "BLOCKED" || result.status === "LOCKED" ? 2 : 0; })
+    .then(result => { const output = report(result); process.exitCode = output.status === "BLOCKED" || output.status === "LOCKED" ? 2 : 0; })
     .catch(e => {
       const result = { status: "BLOCKED", error: /^[A-Z_0-9]+$/.test(e.code || "") ? e.code : "LOCAL_VALIDATION_FAILED" };
       try { report(result); } catch { console.error(JSON.stringify(result)); }

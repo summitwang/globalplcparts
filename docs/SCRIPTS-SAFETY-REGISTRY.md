@@ -12,6 +12,13 @@ activation evidence. This authorization does not extend to historical V18,
 other scraper families, catalog publication, commercial changes or deployment.
 Old V18 and its checkpoint remain historical reference only.
 
+`scripts/classic-automation-lifecycle.js` is **LOW-RISK WRITE**, explicitly
+authorized for local completion evidence and progress reports under
+`reports/classic-complete/`. It reads only the crawler task via a bounded,
+noninteractive local PowerShell query and the local Git commit. It never changes
+tasks, elevates, accesses external services or mutates catalog/state. The existing
+crawler CLI invokes it after batches; `--status` refreshes local status only.
+
 ## Purpose and scope
 
 This registry is a static, repository-evidence-based inventory of every JavaScript file currently under `scripts/`. It is an operational safety reference, not authorization to run a script.
