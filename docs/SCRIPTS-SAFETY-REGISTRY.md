@@ -1,5 +1,15 @@
 # GlobalPLCParts Scripts Safety Registry
 
+## Authorized local image integrity workflow (September 2026)
+
+`scripts/product-image-integrity.js --check` is **READ-ONLY**; `--repair` is
+**HIGH-RISK DATA MUTATION**, explicitly authorized for local image-field-only
+repair with backup, atomic replacement and the existing crawler lock.
+`scripts/product-image-files.js` is a local validation/preservation helper and
+`lib/product-image-policy.js` is the shared browser-safe path policy.
+Neither helper accesses the network. See [image integrity](PRODUCT-IMAGE-INTEGRITY.md).
+Historical image engines remain outside this authorization.
+
 ## Authorized complete Classic Automation workflow (September 2026)
 
 `scripts/classic-automation-complete-crawl.js` and its non-CLI adapter

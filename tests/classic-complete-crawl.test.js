@@ -300,7 +300,7 @@ for (const [label, value, expected] of [
   ['non-string', {}, '/product-images/default.jpg'],
 ]) test('optional image normalization: ' + label, () => {
   assert.equal(c.normalizeImageUrl(value), expected);
-  assert.equal(c.productFrom({ ...item(101), image: value }, c.BRANDS[0], 'test').image, expected);
+  assert.equal(c.productFrom({ ...item(101), image: value }, c.BRANDS[0], 'test').image, '/product-images/default.jpg');
 });
 function imageResponse(image, canonical_url = '/1492-h') {
   return { data: { productSearch: { total_count: 8932,

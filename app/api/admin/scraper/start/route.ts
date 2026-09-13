@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { localImage } from "@/scripts/product-image-files";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,9 +72,7 @@ function detectBrand(text: unknown) {
 }
 
 function normalizeImage(src: unknown) {
-  if (!src) return "/product-images/default-plc.png";
-  if ((src as string).startsWith("//")) return `https:${src}`;
-  return src;
+  return localImage(src, process.cwd());
 }
 
 function readJson<T>(filePath: string, fallback: T): T {

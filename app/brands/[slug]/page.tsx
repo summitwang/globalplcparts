@@ -213,22 +213,7 @@ export default async function BrandDetailPage({
                 className="bg-white border rounded-3xl overflow-hidden hover:shadow-lg transition"
               >
                 <div className="h-48 bg-slate-100 border-b flex items-center justify-center">
-                  {product.image ? (
-                    <ProductImage
-  src={product.image}
-  brand={product.brand}
-  model={product.model}
-/>
-                  ) : (
-                    <div className="text-center">
-                      <div className="text-4xl font-black text-blue-600">
-                        PLC
-                      </div>
-                      <p className="text-slate-400 text-sm mt-2">
-                        Product Image
-                      </p>
-                    </div>
-                  )}
+                  <ProductImage src={product.image} brand={product.brand} model={product.model} />
                 </div>
 
                 <div className="p-6">

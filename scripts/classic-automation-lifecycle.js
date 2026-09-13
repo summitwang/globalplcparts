@@ -28,8 +28,9 @@ function integrity(root, state, products) {
   c.validateState(state); c.validateCatalog(products);
   const baseline = c.validateCatalog(read(path.join(root, "data/classic-complete-sweep-baseline.json")));
   const current = new Map(products.map(p => [c.key(p), p]));
+  const preserved = require("./product-image-files").preservationCheck(root);
   if (baseline.length !== state.initialCatalogCount || c.digest(JSON.stringify(baseline)) !== state.initialCatalogHash ||
-      baseline.some(p => JSON.stringify(current.get(c.key(p))) !== JSON.stringify(p))) c.fail("ORIGINAL_PRODUCT_CHANGED");
+      baseline.some(p => !preserved(current.get(c.key(p)), p))) c.fail("ORIGINAL_PRODUCT_CHANGED");
   const originals = new Map(baseline.map(p => [c.key(p), p]));
   let historicalReferences = 0;
   for (const p of products.filter(p => p.source === "ClassicAutomation")) {
@@ -38,7 +39,7 @@ function integrity(root, state, products) {
     const strict = !url.search && !url.hash && /^\/(?:[a-z0-9._~-]+|parts\/[a-z0-9-]+\/[a-z0-9._~-]+)$/i.test(url.pathname);
     if (!strict) {
       // Preserve exact baseline public references, never grant new acquisitions this exception.
-      const historical = p.acquisition?.workflow !== "classic-complete" && JSON.stringify(originals.get(c.key(p))) === JSON.stringify(p);
+      const historical = p.acquisition?.workflow !== "classic-complete" && originals.has(c.key(p)) && preserved(p, originals.get(c.key(p)));
       const category = !url.search && !url.hash && c.BRANDS.some(b => url.pathname === `/${b.category}/`);
       const search = url.pathname === "/catalogsearch/result/" && [...url.searchParams.keys()].join() === "q" &&
         url.searchParams.get("q") === `${p.brand} ${p.model}` && ["", "#contentarea"].includes(url.hash);

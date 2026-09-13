@@ -3,11 +3,11 @@
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
+const { inspectImage, FALLBACK } = require("./product-image-files");
 
 const ROOT = path.resolve(__dirname, "..");
 const PRODUCTS_PATH = path.join(ROOT, "data", "products.json");
 const BLOG_PATH = path.join(ROOT, "data", "blog-posts.ts");
-const PUBLIC_PATH = path.join(ROOT, "public");
 
 const results = [];
 
@@ -125,6 +125,7 @@ function checkCatalogAndImages() {
     imageCounts.set(image, (imageCounts.get(image) || 0) + 1);
     if (/^https?:\/\//i.test(image)) {
       remoteImages += 1;
+      missingImages.push({ slug: product?.slug || "(unknown)", image: "(unverified remote image)" });
       continue;
     }
 
@@ -133,12 +134,11 @@ function checkCatalogAndImages() {
       continue;
     }
 
-    if (/\/(?:default|[^/]+)\.svg$/i.test(image)) {
+    if (image === FALLBACK || /\/(?:default|[^/]+)\.svg$/i.test(image)) {
       fallbackImages += 1;
     }
 
-    const localPath = path.join(PUBLIC_PATH, image.replace(/^\/+/, ""));
-    if (!fs.existsSync(localPath) || !fs.statSync(localPath).isFile()) {
+    if (inspectImage(image, ROOT).kind !== "valid") {
       missingImages.push({ slug: product?.slug || "(unknown)", image });
     }
   }

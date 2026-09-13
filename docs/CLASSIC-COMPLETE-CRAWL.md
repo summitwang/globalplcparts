@@ -286,3 +286,10 @@ The pre-existing `/product-images/default.jpg` file is absent, including referen
 already in the preserved baseline. This application-image issue is disclosed;
 it does not invalidate acquisition identities or finalization evidence. No image
 replacement, catalog rewrite, application build or deployment was performed.
+
+The subsequent authorized [image integrity repair](PRODUCT-IMAGE-INTEGRITY.md)
+provides the missing canonical JPEG and ensures new application image fields are
+validated local paths. Exact image-only repair receipts extend preservation checks
+without changing state, baseline hashes, non-image identity fields or the completion
+policy. Source image normalization remains strict, but remote images are source
+metadata rather than application hotlinks.

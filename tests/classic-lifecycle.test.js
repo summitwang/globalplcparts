@@ -112,8 +112,10 @@ test("progress reports finalization failure as BLOCKED despite completed state",
 });
 test("actual scheduled CLI entry point finalizes and repeats COMPLETE without catalog writes", t => {
   const f = fixture(t), scripts = path.join(f.root, "scripts"); fs.mkdirSync(scripts);
-  for (const name of ["classic-automation-complete-crawl.js", "classic-automation-lifecycle.js"])
+  for (const name of ["classic-automation-complete-crawl.js", "classic-automation-lifecycle.js", "product-image-files.js"])
     fs.copyFileSync(path.join(c.ROOT, "scripts", name), path.join(scripts, name));
+  fs.mkdirSync(path.join(f.root, "lib"));
+  fs.copyFileSync(path.join(c.ROOT, "lib/product-image-policy.js"), path.join(f.root, "lib/product-image-policy.js"));
   // A completed entry point must never load an acquisition adapter.
   fs.writeFileSync(path.join(scripts, "classic-automation-source.js"), 'throw new Error("UNEXPECTED_ACQUISITION");');
   const preload = path.join(f.root, "local-query-fixture.js");

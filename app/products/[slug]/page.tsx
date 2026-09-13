@@ -126,27 +126,7 @@ return (
       <section className="max-w-7xl mx-auto px-6 py-12 grid lg:grid-cols-2 gap-10">
         <div className="bg-white border rounded-3xl shadow-sm p-8">
           <div className="aspect-square bg-slate-100 rounded-2xl border flex items-center justify-center overflow-hidden">
-            {product.image ? (
-  <div className="w-full h-full flex flex-col items-center justify-center">
-    <ProductImage
-    src={product.image}
-    brand={product.brand}
-    model={product.model}
-    className="max-w-full max-h-full object-contain p-8"
-/>
-
-    <p className="text-xs text-red-600 break-all mt-3">
-      Image path: {product.image}
-    </p>
-  </div>
-) : (
-              <div className="text-center">
-                <div className="text-6xl font-black text-blue-600 mb-4">
-                  PLC
-                </div>
-                <div className="text-slate-400 font-bold">Product Image</div>
-              </div>
-            )}
+            <ProductImage src={product.image} brand={product.brand} model={product.model} className="max-w-full max-h-full object-contain p-8" />
           </div>
         </div>
 

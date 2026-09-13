@@ -229,14 +229,14 @@ function normalizeImageUrl(value) {
       url.pathname.length > "/media/catalog/product/".length ? url.href : fallback;
   } catch { return fallback; }
 }
-function productFrom(item, rule, crawlId) {
+function productFrom(item, rule, crawlId, root = ROOT) {
   if (!item.model || !item.sourceUrl || !item.id) fail("PRODUCT_FIELDS");
   const url = new URL(item.sourceUrl);
   if (url.origin !== "https://www.classicautomation.com" || url.username || url.password || url.search || url.hash ||
       !/^\/(?:[a-z0-9._~-]+|parts\/[a-z0-9-]+\/[a-z0-9._~-]+)$/i.test(url.pathname)) fail("PRODUCT_URL_SCOPE");
   const model = String(item.model).trim();
   if (model.length > 160 || !/[a-z0-9]/i.test(model)) fail("PRODUCT_MODEL");
-  const image = normalizeImageUrl(item.image);
+  const image = require("./product-image-files").localImage(item.image, root);
   return { slug: `${rule.slug}-${slugify(model)}`, brand: rule.brand, brandSlug: rule.slug, model,
     category: "Industrial Automation Part", description: item.description || `${rule.brand} ${model}`,
     image, source: "ClassicAutomation", sourceUrl: item.sourceUrl,
@@ -255,6 +255,7 @@ async function runBatch({ root = ROOT, source, maxItems = 600, maxPages = 50, ma
   try {
     let raw = fs.readFileSync(catalogPath, "utf8"), products = validateCatalog(JSON.parse(raw));
     summary.before = products.length;
+    const preserved = require("./product-image-files").preservationCheck(root);
     if (fs.existsSync(statePath)) {
       const loaded = json(statePath);
       if (loaded.schemaVersion === 1) {
@@ -263,7 +264,7 @@ async function runBatch({ root = ROOT, source, maxItems = 600, maxPages = 50, ma
         const original = validateCatalog(json(path.join(dataDir, "classic-complete-original-catalog.json")));
         const existingMap = new Map(products.map(p => [key(p), p]));
         if (digest(JSON.stringify(original)) !== loaded.initialCatalogHash ||
-            original.some(p => JSON.stringify(existingMap.get(key(p))) !== JSON.stringify(p))) fail("ORIGINAL_PRODUCT_CHANGED");
+            original.some(p => !preserved(existingMap.get(key(p)), p))) fail("ORIGINAL_PRODUCT_CHANGED");
         if (fs.existsSync(backup)) {
           if (JSON.stringify(json(backup)) !== JSON.stringify(loaded)) fail("MIGRATION_BACKUP_MISMATCH");
         } else atomic(backup, loaded, validateLegacyState);
@@ -285,7 +286,7 @@ async function runBatch({ root = ROOT, source, maxItems = 600, maxPages = 50, ma
     const byKey = new Map(products.map(p => [key(p), p]));
     const bySlug = new Map(products.map(p => [norm(p.slug), p]));
     if (digest(JSON.stringify(baseline)) !== s.initialCatalogHash || baseline.length !== s.initialCatalogCount ||
-        products.length < baseline.length || baseline.some(p => JSON.stringify(byKey.get(key(p))) !== JSON.stringify(p))) fail("ORIGINAL_PRODUCT_CHANGED");
+        products.length < baseline.length || baseline.some(p => !preserved(byKey.get(key(p)), p))) fail("ORIGINAL_PRODUCT_CHANGED");
     if (s.status === "FULLY_COMPLETE") return { ...summary, status: "COMPLETE", after: products.length, network: 0 };
     const save = () => atomic(statePath, s, validateState);
     const current = s.brands.find(b => !b.complete), rule = BRANDS.find(b => b.slug === current.brand);
@@ -298,7 +299,7 @@ async function runBatch({ root = ROOT, source, maxItems = 600, maxPages = 50, ma
         if (!current.pending) {
           const r = await sourceImpl.list(rule, current.currentPage);
           const evidence = pageResult(r, current.currentPage);
-          r.items.forEach(item => productFrom(item, rule, s.crawlId));
+          r.items.forEach(item => productFrom(item, rule, s.crawlId, root));
           if (current.startTotal === null) current.startTotal = r.total;
           if (current.startTotal !== r.total || !evidence.consistent) current.nonConfirming = true;
           current.totalCount = r.total; current.totalPages = r.pages;
@@ -308,7 +309,7 @@ async function runBatch({ root = ROOT, source, maxItems = 600, maxPages = 50, ma
         const pending = current.pending;
         while (pending.cursor < pending.items.length && summary.processed < maxItems && Date.now() < deadline) {
           const item = pending.items[pending.cursor], id = norm(item.id);
-          const candidate = productFrom(item, rule, s.crawlId);
+          const candidate = productFrom(item, rule, s.crawlId, root);
           candidate.acquisition.generation = current.generation;
           const existing = byKey.get(key(candidate));
           const slugMatch = bySlug.get(norm(candidate.slug));
