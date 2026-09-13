@@ -284,3 +284,51 @@ test("standalone modules never invoke unrelated scripts or load env", () => {
     assert.doesNotMatch(source, /require\(["'][^"']*(?:product-expansion|image-engine|daily-operations|daily-health)/);
   }
 });
+
+const mediaOrigin = 'https://www.classicautomation.com';
+const mediaPath = '/media/catalog/product/1/4/1492-h.jpg';
+for (const [label, value, expected] of [
+  ['absolute', mediaOrigin + mediaPath, mediaOrigin + mediaPath],
+  ['relative', mediaPath, mediaOrigin + mediaPath],
+  ['observed protocol-relative', '//www.classicautomation.com' + mediaPath, mediaOrigin + mediaPath],
+  ['empty', '', '/product-images/default.jpg'],
+  ['malformed', 'https://[invalid', '/product-images/default.jpg'],
+  ['external', 'https://example.com' + mediaPath, '/product-images/default.jpg'],
+  ['unsupported path', mediaOrigin + '/images/logo.jpg', '/product-images/default.jpg'],
+  ['insecure HTTP', 'http://www.classicautomation.com' + mediaPath, '/product-images/default.jpg'],
+  ['credentials', 'https://user:pass@www.classicautomation.com' + mediaPath, '/product-images/default.jpg'],
+  ['non-string', {}, '/product-images/default.jpg'],
+]) test('optional image normalization: ' + label, () => {
+  assert.equal(c.normalizeImageUrl(value), expected);
+  assert.equal(c.productFrom({ ...item(101), image: value }, c.BRANDS[0], 'test').image, expected);
+});
+function imageResponse(image, canonical_url = '/1492-h') {
+  return { data: { productSearch: { total_count: 8932,
+    page_info: { current_page: 2, page_size: 12, total_pages: 745 },
+    items: [{ product: { sku: '1492-H', canonical_url, image: { url: image } } }] } } };
+}
+test('observed Allen Bradley page 2 image reproduces old exception and normalizes at adapter', () => {
+  const observed = '//www.classicautomation.com' + mediaPath;
+  assert.throws(() => new URL(observed), { code: 'ERR_INVALID_URL' });
+  const result = adapter.parseResponse(imageResponse(observed), c.BRANDS[0], 2);
+  assert.equal(result.page, 2);
+  assert.equal(result.total, 8932);
+  assert.equal(result.items[0].image, mediaOrigin + mediaPath);
+  assert.equal(c.productFrom(result.items[0], c.BRANDS[0], 'test').sourceUrl, mediaOrigin + '/1492-h');
+});
+test('malformed and out-of-scope product URLs remain blocking', () => {
+  for (const sourceUrl of ['https://[invalid', 'https://example.com/1492-h', mediaOrigin + '/private/path/to/item']) {
+    assert.throws(() => adapter.parseResponse(imageResponse('', sourceUrl), c.BRANDS[0], 2));
+    assert.throws(() => c.productFrom({ ...item(101), sourceUrl }, c.BRANDS[0], 'test'));
+  }
+});
+test('invalid optional image commits page with fallback', async t => {
+  const f = fixture(t);
+  const source = listing([101]);
+  const list = source.list;
+  source.list = async (...args) => { const p = await list(...args); p.items[0].image = 'https://[invalid'; return p; };
+  const result = await c.runBatch({ root: f.root, source, maxPages: 1 });
+  assert.equal(result.pagesCommitted, 1);
+  assert.equal(result.added, 1);
+  assert.equal(f.products()[1].image, '/product-images/default.jpg');
+});

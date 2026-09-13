@@ -219,6 +219,16 @@ function migrateLegacy(old, products) {
   }
   return validateState(s);
 }
+function normalizeImageUrl(value) {
+  const fallback = "/product-images/default.jpg";
+  if (typeof value !== "string" || !value.trim()) return fallback;
+  try {
+    const url = new URL(value, "https://www.classicautomation.com");
+    return url.origin === "https://www.classicautomation.com" && !url.username && !url.password &&
+      !url.search && !url.hash && url.pathname.startsWith("/media/catalog/product/") &&
+      url.pathname.length > "/media/catalog/product/".length ? url.href : fallback;
+  } catch { return fallback; }
+}
 function productFrom(item, rule, crawlId) {
   if (!item.model || !item.sourceUrl || !item.id) fail("PRODUCT_FIELDS");
   const url = new URL(item.sourceUrl);
@@ -226,8 +236,7 @@ function productFrom(item, rule, crawlId) {
       !/^\/(?:[a-z0-9._~-]+|parts\/[a-z0-9-]+\/[a-z0-9._~-]+)$/i.test(url.pathname)) fail("PRODUCT_URL_SCOPE");
   const model = String(item.model).trim();
   if (model.length > 160 || !/[a-z0-9]/i.test(model)) fail("PRODUCT_MODEL");
-  const image = item.image && new URL(item.image).origin === url.origin && new URL(item.image).pathname.startsWith("/media/catalog/product/")
-    ? item.image : "/product-images/default.jpg";
+  const image = normalizeImageUrl(item.image);
   return { slug: `${rule.slug}-${slugify(model)}`, brand: rule.brand, brandSlug: rule.slug, model,
     category: "Industrial Automation Part", description: item.description || `${rule.brand} ${model}`,
     image, source: "ClassicAutomation", sourceUrl: item.sourceUrl,
@@ -367,7 +376,7 @@ async function runBatch({ root = ROOT, source, maxItems = 600, maxPages = 50, ma
     return summary;
   } finally { unlock(); }
 }
-module.exports = { ROOT, STATE_NAME, BRANDS, PAGE_SIZE, fail, digest, norm, key, atomic, acquire, initialState, validateState, validateLegacyState, migrateLegacy, finishSweep, setHash, validateCatalog, pageResult, productFrom, runBatch };
+module.exports = { ROOT, STATE_NAME, BRANDS, PAGE_SIZE, fail, digest, norm, key, atomic, acquire, initialState, validateState, validateLegacyState, migrateLegacy, finishSweep, setHash, validateCatalog, pageResult, normalizeImageUrl, productFrom, runBatch };
 if (require.main === module) {
   const report = result => {
     const output = { timestamp: new Date().toISOString(), ...result };

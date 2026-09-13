@@ -183,7 +183,7 @@ Account: DESKTOP-EVEM1EN\User, S4U/password-free, limited rights.
 Action: verified Node executable with the absolute new crawler path and --batch.
 Working directory: C:\Projects\globalplcparts.
 Cadence: every 15 minutes; IgnoreNew; StartWhenAvailable; zero scheduler failure
-restarts; no wake; normal AC conditions; 12-minute scheduler limit. The internal
+restarts; no wake; normal AC conditions; existing 10-minute scheduler limit. The internal
 eight-minute budget leaves time for bounded in-flight requests/writes.
 
 The user authorized one controlled scheduled acceptance run after registration.
@@ -196,3 +196,25 @@ documentation after successful controlled reconciliation. Stage only those exact
 files. Runtime acquisition/state/backups/logs/locks/temp files must stay out.
 No automated publication, additional commits by the runner, push or deployment
 is part of scheduling.
+
+## Optional image URL correction (2026-09-13)
+
+Allen Bradley page 2 returned protocol-relative image strings for 1492-H,
+1492-N37 and 1492-PD3163, including
+`//www.classicautomation.com/media/catalog/product/1/4/1492-h.jpg`.
+The previous final product conversion passed these to `new URL` without a base,
+causing ERR_INVALID_URL before the page committed.
+
+The public adapter now normalizes optional images using a shared validator;
+final product conversion also applies it to safely handle persisted queues.
+Relative images resolve against the HTTPS Classic Automation origin. Only that
+origin's `/media/catalog/product/` files without credentials, query or fragment
+are accepted. Invalid or unsupported images use `/product-images/default.jpg`.
+Product source URL and identity validation remain strict and blocking.
+
+All 57 dedicated tests pass, including 13 added image/source URL regressions.
+The controlled retest passed with the task disabled: generation 2 page 2 committed
+in 20.546 seconds, adding three and skipping nine products (5,304 to 5,307).
+All previous records were preserved; duplicate identities and slugs were zero.
+The next checkpoint is generation 2 page 3, with no pending items. Runtime catalog
+and checkpoint changes are excluded from the fix commit.

@@ -1,7 +1,7 @@
 "use strict";
 // Public frontend request adapter. No cookies, private credentials, environment files,
 // remote code execution, redirects, detail scraping or unrelated API operations.
-const { BRANDS, PAGE_SIZE, fail } = require("./classic-automation-complete-crawl");
+const { BRANDS, PAGE_SIZE, fail, normalizeImageUrl } = require("./classic-automation-complete-crawl");
 const ORIGIN = "https://www.classicautomation.com";
 const SEARCH = "https://commerce.adobe.io/search/graphql";
 // Same productSearch selection and fragments as public @magento/search-sdk 0.8.9,
@@ -60,7 +60,7 @@ function parseResponse(body, rule, page) {
     if (!model || model.length > 160) fail("PUBLIC_MODEL_AMBIGUOUS");
     return { id: p.sku.trim(), model, sourceUrl: url.href,
       description: text(p.short_description?.html || p.description?.html),
-      image: p.image?.url || p.thumbnail?.url || "" };
+      image: normalizeImageUrl(p.image?.url || p.thumbnail?.url || "") };
   });
   return { page: ps.page_info.current_page, pageSize: ps.page_info.page_size,
     pages: ps.page_info.total_pages, total: ps.total_count, items };
