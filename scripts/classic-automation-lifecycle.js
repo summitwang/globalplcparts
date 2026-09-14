@@ -36,11 +36,12 @@ function integrity(root, state, products) {
   for (const p of products.filter(p => p.source === "ClassicAutomation")) {
     const url = new URL(p.sourceUrl);
     if (url.origin !== "https://www.classicautomation.com" || url.username || url.password) c.fail("FINAL_SOURCE_SCOPE");
-    const strict = !url.search && !url.hash && /^\/(?:[a-z0-9._~-]+|parts\/[a-z0-9-]+\/[a-z0-9._~-]+)$/i.test(url.pathname);
+    const strict = c.isPublicProductUrl(url, p.model);
     if (!strict) {
       // Preserve exact baseline public references, never grant new acquisitions this exception.
       const historical = p.acquisition?.workflow !== "classic-complete" && originals.has(c.key(p)) && preserved(p, originals.get(c.key(p)));
-      const category = !url.search && !url.hash && c.BRANDS.some(b => url.pathname === `/${b.category}/`);
+      const category = !url.search && !url.hash && (c.BRANDS.some(b => url.pathname === `/${b.category}/`) ||
+        (url.pathname === "/parts" && p.model === "PARTS"));
       const search = url.pathname === "/catalogsearch/result/" && [...url.searchParams.keys()].join() === "q" &&
         url.searchParams.get("q") === `${p.brand} ${p.model}` && ["", "#contentarea"].includes(url.hash);
       if (!historical || !(category || search)) c.fail("FINAL_SOURCE_SCOPE");

@@ -229,11 +229,26 @@ function normalizeImageUrl(value) {
       url.pathname.length > "/media/catalog/product/".length ? url.href : fallback;
   } catch { return fallback; }
 }
+function isPublicProductUrl(url, model) {
+  if (url.protocol !== "https:" || url.origin !== "https://www.classicautomation.com" ||
+      url.username || url.password || url.search || url.hash) return false;
+  const segments = url.pathname.split("/").slice(1);
+  const segment = value => /^[a-z0-9._~-]+$/i.test(value || "") && value !== "." && value !== "..";
+  const reserved = new Set(["admin", "administrator", "account", "customer", "login", "logout", "cart", "checkout",
+    "search", "catalogsearch", "api", "rest", "graphql", "static", "media", "catalog", "parts", "wishlist", "private"]);
+  if (segments.length === 1) return segment(segments[0]) && !reserved.has(segments[0].toLowerCase());
+  if (segments.length === 3 && segments[0] === "parts")
+    return BRANDS.some(b => b.category === `parts/${segments[1]}`) && segment(segments[2]) && !reserved.has(segments[2].toLowerCase());
+  // Public page-280 evidence: Magento's numeric product route, with an exact SKU slug.
+  return segments.length === 8 && segments[0] === "catalog" && segments[1] === "product" &&
+    segments[2] === "view" && segments[3] === "id" && /^[1-9][0-9]{0,17}$/.test(segments[4]) &&
+    segments[5] === "s" && segment(segments[6]) && !reserved.has(segments[6].toLowerCase()) &&
+    typeof model === "string" && segments[6] === model.trim().toLowerCase() && segments[7] === "";
+}
 function productFrom(item, rule, crawlId, root = ROOT) {
   if (!item.model || !item.sourceUrl || !item.id) fail("PRODUCT_FIELDS");
   const url = new URL(item.sourceUrl);
-  if (url.origin !== "https://www.classicautomation.com" || url.username || url.password || url.search || url.hash ||
-      !/^\/(?:[a-z0-9._~-]+|parts\/[a-z0-9-]+\/[a-z0-9._~-]+)$/i.test(url.pathname)) fail("PRODUCT_URL_SCOPE");
+  if (!isPublicProductUrl(url, item.model)) fail("PRODUCT_URL_SCOPE");
   const model = String(item.model).trim();
   if (model.length > 160 || !/[a-z0-9]/i.test(model)) fail("PRODUCT_MODEL");
   const image = require("./product-image-files").localImage(item.image, root);
@@ -377,7 +392,7 @@ async function runBatch({ root = ROOT, source, maxItems = 600, maxPages = 50, ma
     return summary;
   } finally { unlock(); }
 }
-module.exports = { ROOT, STATE_NAME, BRANDS, PAGE_SIZE, fail, digest, norm, key, atomic, acquire, initialState, validateState, validateLegacyState, migrateLegacy, finishSweep, setHash, validateCatalog, pageResult, normalizeImageUrl, productFrom, runBatch };
+module.exports = { ROOT, STATE_NAME, BRANDS, PAGE_SIZE, fail, digest, norm, key, atomic, acquire, initialState, validateState, validateLegacyState, migrateLegacy, finishSweep, setHash, validateCatalog, pageResult, normalizeImageUrl, isPublicProductUrl, productFrom, runBatch };
 if (require.main === module) {
   const report = result => {
     // runBatch has released the mutation lock before local lifecycle reporting.

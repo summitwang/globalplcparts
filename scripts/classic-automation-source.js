@@ -1,7 +1,7 @@
 "use strict";
 // Public frontend request adapter. No cookies, private credentials, environment files,
 // remote code execution, redirects, detail scraping or unrelated API operations.
-const { BRANDS, PAGE_SIZE, fail, normalizeImageUrl } = require("./classic-automation-complete-crawl");
+const { BRANDS, PAGE_SIZE, fail, normalizeImageUrl, isPublicProductUrl } = require("./classic-automation-complete-crawl");
 const ORIGIN = "https://www.classicautomation.com";
 const SEARCH = "https://commerce.adobe.io/search/graphql";
 // Same productSearch selection and fragments as public @magento/search-sdk 0.8.9,
@@ -51,8 +51,7 @@ function parseResponse(body, rule, page) {
     const p = item.product;
     if (!p || typeof p.sku !== "string" || !p.sku.trim() || typeof p.canonical_url !== "string") fail("PUBLIC_PRODUCT_IDENTITY");
     const url = new URL(p.canonical_url, ORIGIN);
-    if (url.origin !== ORIGIN || url.username || url.password || url.search || url.hash ||
-        !/^\/(?:[a-z0-9._~-]+|parts\/[a-z0-9-]+\/[a-z0-9._~-]+)$/i.test(url.pathname)) fail("PUBLIC_PRODUCT_SCOPE");
+    if (!isPublicProductUrl(url, p.sku)) fail("PUBLIC_PRODUCT_SCOPE");
     // The public listing's name and SKU are the model (including revision slashes).
     // Canonical product URLs now live at the site root. Membership is established
     // by the exact approved categoryPath request, never inferred from that URL.

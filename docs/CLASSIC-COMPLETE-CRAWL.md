@@ -293,3 +293,41 @@ validated local paths. Exact image-only repair receipts extend preservation chec
 without changing state, baseline hashes, non-image identity fields or the completion
 policy. Source image normalization remains strict, but remote images are source
 metadata rather than application hotlinks.
+
+## Verified public product route at Allen Bradley page 280 (2026-09-14)
+
+The approved Adobe listing returned SKU `22B-D1P4C104` with canonical_url
+`//www.classicautomation.com/catalog/product/view/id/1827716/s/22b-d1p4c104/`.
+Normalization already produced the correct HTTPS URL, but the old pathname regex
+only accepted one root segment or `/parts/<category>/<product>`, so it blocked this
+eight-segment Magento product route before persisting page 280.
+
+The exact public URL returned HTTP 200, an H1 of `22B-D1P4C104`, an Allen-Bradley
+AC-drive title and the `catalog-product-view` body class. Its public canonical tag
+used the same ID/SKU with Magento's `_ignore_category/1` parameter segments.
+The ordinary `/22b-d1p4c104` URL returned a 301 to `/parts/22b-d1p4c104`.
+No redirect was followed, no unrelated route was fetched, and neither alternate
+shape was added speculatively to acquisition validation.
+
+Adapter, final product conversion and finalizer share structural URL validation.
+The additional route is exactly `/catalog/product/view/id/<positive-integer>/s/<sku>/`,
+with a trailing slash and a route SKU equal to the listing model lowercased.
+There are no extra segments, encoded separators or query/fragment exceptions.
+HTTPS, exact origin and no credentials remain mandatory. Existing root product
+paths and approved `/parts/<brand>/<product>` routes remain supported; known
+admin/account/cart/search/API/static namespaces are rejected. Category membership
+still comes only from the exact approved categoryPath request.
+
+The baseline already contained a model `PARTS` referencing `/parts`. The stronger
+acquisition guard now rejects that index route. Finalization preserves only the
+exact baseline record under its existing historical-reference exception; it cannot
+authorize a new product. No historical product or state was changed to satisfy tests.
+
+145 source/crawler/lifecycle/image tests pass, including 38 route regressions.
+Unsafe items still block the whole page without advancing its checkpoint; no
+item-skipping or weaker completion rule was introduced.
+
+The controlled real retest, with the existing task temporarily disabled, resumed
+generation 2 page 280 and committed it in 34.687 seconds: 12 added, zero skipped,
+8,418 to 8,430 products. All earlier rows were unchanged, duplicate identities and
+slugs were zero, and broken images were zero. Next page 281; pending zero.
