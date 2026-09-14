@@ -1,5 +1,46 @@
 # GPLP-AUTO-002 — Daily Operations Report
 
+## Approved unattended runtime policy (2026-09-14)
+
+This authorization supersedes the old dirty-worktree Stage-1 source-file exception.
+The collector now permits only unstaged modifications or untracked files at exact
+approved runtime paths. All source-code edits, including the collector itself,
+unexpected untracked paths, staged changes, deletions, renames and conflicts block.
+Neither `.env` nor secret-like files gain an exception. Ignored environment files
+remain outside collection and are not read or printed.
+
+The permitted data filenames are `products.json`, `classic-complete-crawl-state.json`,
+`classic-complete-last-run.json`, `classic-complete-original-catalog.json`,
+`classic-complete-state-v1-backup.json`, `classic-complete-sweep-baseline.json`, and
+`product-image-repairs.json`, all directly under `data/`. Their writer-generated
+UUID-v4 `.tmp` variants are permitted, plus the exact catalog lock and `.recovery`.
+
+Under `reports/classic-complete/`, only `status.json`, `status.md`, and UUID-v4 crawl
+directories containing `completion.json`, `final-state.json`, `summary.md` are
+permitted, including their exact UUID staging forms. Under
+`reports/product-image-integrity/`, only `audit-before.json`, `audit-before.md`,
+`audit-after.json`, `controlled-repair.json`, and UUID repair directories containing
+`catalog-before.json` or `repair.json` (and UUID write temporaries) are permitted.
+No whole-directory or arbitrary-extension wildcard is used. Path traversal,
+symlink/junction ancestors and non-file entries are rejected. Runtime report
+contents are not added to the collector's input scope.
+
+Runtime catalog edits are data, never source-code approval. The Git report remains
+DIRTY with the actual changed-path count and an explicit runtime-only finding.
+A valid runtime-only collection is ATTENTION, exit 0. It remains ineligible for
+clean-history observations and cannot silently advance the approved baseline.
+Unrecognized source changes report BLOCKED/DIRTY even alongside allowed runtime.
+The schema, history transport, metric definitions and scheduler are unchanged.
+
+Catalog and Git snapshot-change checks remain enforced. If an active writer changes
+an input during collection, AUTO-002 still fails closed with CHANGED rather than
+publishing mixed evidence. There is no retry loop, network action, write, commit,
+push, task recreation or schedule modification in the collector.
+
+The image-integrity implementation already exists in local commit
+`69a7b134147cf46d58a18363969b4a0e843e8e5d`; it is not rewritten or recommitted here.
+Runtime repairs, catalog changes, state, backups and reports remain uncommitted.
+
 ## Stage 3 current implementation: local history and daily runner
 
 The human's 2026-09-10 FAST TRACK request authorizes implementation and synthetic

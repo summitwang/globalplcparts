@@ -31,17 +31,34 @@ const ROUTES = Object.freeze([
   "app/page.tsx", "app/products/page.tsx", "app/brands/page.tsx",
   "app/search/page.tsx", "app/blog/page.tsx",
 ]);
-const STAGE_FILES = Object.freeze([
-  "scripts/daily-operations-report.js",
-  "tests/daily-operations-report.test.js",
-  "docs/DAILY-OPERATIONS-REPORT-CONTRACT.md",
+const RUNTIME_DATA = Object.freeze([
+  "products.json", "classic-complete-crawl-state.json", "classic-complete-last-run.json",
+  "classic-complete-original-catalog.json", "classic-complete-state-v1-backup.json",
+  "classic-complete-sweep-baseline.json", "product-image-repairs.json",
 ]);
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
+function approvedRuntimePath(relative) {
+  if (typeof relative !== "string" || /[\\\x00-\x1f]/.test(relative) || relative.split("/").some(p => !p || p === "." || p === "..")) return false;
+  if (RUNTIME_DATA.some(name => relative === `data/${name}` || new RegExp(`^data/${name.replaceAll(".", "\\.")}\\.${UUID}\\.tmp$`).test(relative))) return true;
+  if (["data/classic-complete-catalog.lock", "data/classic-complete-catalog.lock.recovery"].includes(relative)) return true;
+  const transient = `(?:\\.${UUID}\\.tmp)?`;
+  if (new RegExp(`^reports/classic-complete/status\\.(?:json|md)${transient}$`).test(relative)) return true;
+  if (new RegExp(`^reports/classic-complete/${UUID}(?:\\.${UUID}\\.tmp)?/(?:completion\\.json|final-state\\.json|summary\\.md)${transient}$`).test(relative)) return true;
+  if (["audit-before.json", "audit-before.md", "audit-after.json", "controlled-repair.json"].some(name => relative === `reports/product-image-integrity/${name}`)) return true;
+  return new RegExp(`^reports/product-image-integrity/${UUID}/(?:catalog-before|repair)\\.json${transient}$`).test(relative);
+}
+function classifyGitStatus(status) {
+  const changes = status.split("\0").filter(Boolean);
+  // Renames, deletions, conflicts and staged changes are never runtime exceptions.
+  return { changedPaths: changes.length,
+    understood: changes.every(line => /^(?: M|\?\?) /.test(line) && approvedRuntimePath(line.slice(3))) };
+}
 const ERRORS = Object.freeze({
   INPUT: "Required input is missing, unreadable, oversized or has an unsupported format.",
   PATH: "An unsafe path or symbolic link was rejected before further collection.",
   CHANGED: "Inputs changed during collection; results were discarded. No retry attempted.",
   GIT: "Repository identity or Git state could not be verified safely.",
-  DIRTY: "Working changes extend beyond the reviewed Stage 1 implementation files.",
+  DIRTY: "Working changes include source edits or paths outside the explicit approved runtime policy.",
   SENSITIVE: "Potential sensitive material was detected; input details were suppressed.",
   LIMIT: "Collection exceeded its resource limit; no retry attempted.",
   ARGUMENT: "Only the fixed JSON transport flag is supported; arbitrary paths are prohibited.",
@@ -146,10 +163,16 @@ function gitSnapshot(root) {
     if (!/^[a-f0-9]{40,64}$/.test(commit)) stop("GIT");
     const branch = run(["rev-parse", "--abbrev-ref", "HEAD"]).trim();
     const status = run(["status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=all"]);
-    const changes = status.split("\0").filter(Boolean);
-    const understood = changes.every((line) => /^(?:\?\?| M|M |A |AM) /.test(line) && STAGE_FILES.includes(line.slice(3)));
+    const classification = classifyGitStatus(status);
+    if (classification.understood) {
+      for (const line of status.split("\0").filter(Boolean)) {
+        // Check ancestors without reading runtime contents; symlinks cannot launder other files.
+        const file = checkedPath(root, line.slice(3));
+        if (!fs.lstatSync(file).isFile()) stop("PATH");
+      }
+    }
     return { commit, branch: branch === "main" ? "MAIN" : branch === "HEAD" ? "DETACHED" : "OTHER",
-      changedPaths: changes.length, understood, fingerprint: hash(commit + branch + status) };
+      ...classification, fingerprint: hash(commit + branch + status) };
   } catch { stop("GIT"); }
 }
 
@@ -303,6 +326,7 @@ function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {} }
   try {
     const snapshot = new Snapshot(root);
     const git = readGit(root);
+    report.git = { state: git.changedPaths ? "DIRTY" : "CLEAN", changedPaths: git.changedPaths, branch: git.branch, head: git.commit };
     if (!git.understood) stop("DIRTY");
     let approved = null;
     const baselineSource = snapshot.read(BASELINE_PATH);
@@ -386,7 +410,7 @@ function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {} }
     if (compared.rows.some((r) => r.status === "ATTENTION" && r.baseline !== null)) finding("METRIC-CHANGES", "MEDIUM", "LOCAL METRIC DELTAS", "Review changed metric rows; quality proxies do not prove quality or authorize repair.");
     if (!approved) finding("BASELINE", "LOW", report.baseline, "Review baseline availability or compatibility; do not replace or advance it automatically.");
     if (git.branch !== "MAIN") finding("BRANCH", "LOW", "NON-MAIN BRANCH", "MAIN baseline comparison withheld; review branch context without changing Git state.");
-    if (git.changedPaths) finding("GIT-REVIEW", "LOW", "KNOWN STAGE 1 PATHS ONLY", "Review the local implementation diff; do not commit or push automatically.");
+    if (git.changedPaths) finding("GIT-REVIEW", "LOW", "APPROVED RUNTIME PATHS ONLY", "Runtime catalog/state/report changes are not source-code approval. Keep runtime artifacts uncommitted; no automatic commit or push.");
     beforeVerify(); // Synthetic test seam only; never populated by the CLI.
     snapshot.verify();
     const afterGit = readGit(root);
@@ -447,4 +471,4 @@ if (require.main === module) {
   process.exitCode = exitCodeFor(report.status);
 }
 
-module.exports = { collect, render, TEXT_INPUTS, ROUTES, BASELINE_PATH, POLICY, METRIC_KEYS, validateBaseline, compareMetrics, statusOf, exitCodeFor, validateMetrics, parseBaselineJSON, checkedPath, canonical, exactKeys, ROOT, VERSION };
+module.exports = { collect, render, TEXT_INPUTS, ROUTES, BASELINE_PATH, POLICY, METRIC_KEYS, validateBaseline, compareMetrics, statusOf, exitCodeFor, validateMetrics, parseBaselineJSON, checkedPath, canonical, exactKeys, ROOT, VERSION, approvedRuntimePath, classifyGitStatus };

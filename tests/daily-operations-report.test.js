@@ -696,3 +696,49 @@ test("unexpected native exit remains visible and critical native exit retains pr
     assert.match(result.output, native === 4 ? /CRITICAL STOP/ : /BLOCKED/);
   }
 });
+
+const { approvedRuntimePath, classifyGitStatus } = require('../scripts/daily-operations-report');
+const runtimeId = '00338b72-f709-45c0-ae82-c8dc50f7f4f4';
+for (const name of [
+  'data/products.json', 'data/classic-complete-crawl-state.json', 'data/classic-complete-last-run.json',
+  'data/classic-complete-original-catalog.json', 'data/classic-complete-state-v1-backup.json',
+  'data/classic-complete-sweep-baseline.json', 'data/product-image-repairs.json',
+  'data/classic-complete-catalog.lock', 'data/classic-complete-catalog.lock.recovery',
+  `data/products.json.${runtimeId}.tmp`, 'reports/classic-complete/status.md',
+  `reports/classic-complete/${runtimeId}/completion.json`,
+  `reports/classic-complete/${runtimeId}.${runtimeId}.tmp/final-state.json.${runtimeId}.tmp`,
+  `reports/product-image-integrity/${runtimeId}/catalog-before.json`,
+  'reports/product-image-integrity/audit-before.json', 'reports/product-image-integrity/controlled-repair.json',
+]) test('approved runtime path accepted: ' + name, () => {
+  assert.equal(approvedRuntimePath(name), true);
+  assert.equal(classifyGitStatus('?? ' + name + '\0').understood, true);
+});
+for (const name of [
+  'scripts/unexpected.js', 'app/page.tsx', 'scripts/daily-operations-report.js',
+  'unexpected.txt', '.env', '.env.local', 'secrets.json',
+  'reports/classic-complete/secret.json', 'reports/classic-complete/status.js',
+  `reports/classic-complete/${runtimeId}/credentials.json`,
+  'reports/product-image-integrity/anything.json', 'reports/other/status.json',
+  'data/classic-complete-crawl-state.json.bak', 'data/products.json.secret.tmp',
+  'reports/classic-complete/../status.json', 'reports\\classic-complete\\status.json',
+]) test('unexpected or secret-like path rejected: ' + name, () => {
+  assert.equal(approvedRuntimePath(name), false);
+  assert.equal(classifyGitStatus('?? ' + name + '\0').understood, false);
+  assert.equal(classifyGitStatus(' M ' + name + '\0').understood, false);
+});
+for (const status of ['M ', 'A ', 'AM', ' D', 'R ', 'UU']) test('non-runtime Git operation rejected: ' + status, () => {
+  assert.equal(classifyGitStatus(status + ' data/products.json\0').understood, false);
+});
+test('runtime-only collector succeeds read-only and remains explicitly DIRTY', t => {
+  const f = fixture(t); const classification = classifyGitStatus(' M data/products.json\0?? reports/classic-complete/status.json\0');
+  const report = collect({ ...f, readGit: () => ({ ...f.readGit(), ...classification, commit: 'b'.repeat(40) }) });
+  assert.equal(report.status, 'ATTENTION'); assert.equal(exitCodeFor(report.status), 0);
+  assert.equal(report.git.state, 'DIRTY'); assert.equal(report.git.changedPaths, 2);
+  assert.equal(report.findings.find(x => x.id === 'GIT-REVIEW').evidence, 'APPROVED RUNTIME PATHS ONLY');
+  assert.equal(history.eligible(report), false);
+});
+test('source edit alongside runtime remains blocked and reported DIRTY', t => {
+  const f = fixture(t); const classification = classifyGitStatus(' M data/products.json\0 M app/page.tsx\0');
+  const report = collect({ ...f, readGit: () => ({ ...f.readGit(), ...classification, commit: 'b'.repeat(40) }) });
+  assert.equal(report.status, 'BLOCKED'); assert.equal(report.failure, 'DIRTY'); assert.equal(report.git.state, 'DIRTY');
+});
