@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { blogPosts } from "@/data/blog-posts";
-import { products } from "@/data/products";
-import { notFound } from "next/navigation";
+import { blogMeta, blogSchema, breadcrumbs } from "@/lib/seo-core";
+import SeoJsonLd from "@/components/SeoJsonLd";
+import mappings from "@/data/seo-blog-links.json";
+import { notFound, permanentRedirect } from "next/navigation";
 
-const siteUrl = "https://globalplcparts.com";
+
 const whatsappNumber = "13774696836";
 
 export async function generateMetadata({
@@ -12,22 +14,11 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const post = blogPosts.find((p) => p.slug === slug.toLowerCase());
+  if (post && slug !== post.slug) permanentRedirect(`/blog/${post.slug}`);
 
-  if (!post) {
-    return {
-      title: "Blog Post Not Found | GlobalPLCParts",
-      description: "Industrial automation article not found.",
-    };
-  }
-
-  return {
-    title: `${post.title} | GlobalPLCParts Blog`,
-    description: post.description || post.excerpt,
-    alternates: {
-      canonical: `${siteUrl}/blog/${post.slug}`,
-    },
-  };
+  if (!post) notFound();
+  return blogMeta(post);
 }
 
 export default async function BlogPostPage({
@@ -36,31 +27,16 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const post = blogPosts.find((p) => p.slug === slug.toLowerCase());
+  if (post && slug !== post.slug) permanentRedirect(`/blog/${post.slug}`);
 
   if (!post) {
     notFound();
   }
 
-  const relatedProducts = products.slice(0, 6);
+  const relatedLinks = mappings.filter(m => m.postSlug === post.slug);
 
-  const articleJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.title,
-    description: post.description || post.excerpt,
-    datePublished: post.date,
-    dateModified: post.date,
-    author: {
-      "@type": "Organization",
-      name: "GlobalPLCParts",
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "GlobalPLCParts",
-    },
-    mainEntityOfPage: `${siteUrl}/blog/${post.slug}`,
-  };
+  const articleJsonLd = [blogSchema(post), breadcrumbs([["Home", "/"], ["Blog", "/blog"], [post.title, `/blog/${post.slug}`]])];
 
   const whatsappText = encodeURIComponent(
     `Hello, I want to ask about ${post.title}.`
@@ -68,12 +44,7 @@ export default async function BlogPostPage({
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(articleJsonLd),
-        }}
-      />
+      <SeoJsonLd data={articleJsonLd} />
 
       <section className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-6 py-6 text-sm text-slate-500">
@@ -185,31 +156,7 @@ export default async function BlogPostPage({
           </section>
         </div>
 
-        <section className="mt-12">
-          <h2 className="text-3xl font-black mb-6">
-            Related Industrial Products
-          </h2>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {relatedProducts.map((product) => (
-              <Link
-                key={product.slug}
-                href={`/products/${product.slug}`}
-                className="bg-white border rounded-2xl p-5 hover:shadow-lg transition"
-              >
-                <p className="text-blue-600 font-bold mb-2">
-                  {product.brand}
-                </p>
-                <h3 className="text-xl font-black mb-2">
-                  {product.model}
-                </h3>
-                <p className="text-sm text-slate-500">
-                  {product.category}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
+        {relatedLinks.length > 0 && <section className="mt-12"><h2 className="text-3xl font-black mb-6">Related brand catalogs</h2><div className="flex flex-wrap gap-6">{relatedLinks.map(link => <Link key={link.href} href={link.href} className="text-blue-600 font-bold">{link.label}</Link>)}</div></section>}
       </article>
     </main>
   );

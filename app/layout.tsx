@@ -11,6 +11,7 @@ const whatsappNumber = "8613774696836";
 const GA_ID = "G-LPS04SZVX7";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://globalplcparts.com"),
   title: "GlobalPLCParts | Industrial Automation Parts Supplier",
   description:
     "GlobalPLCParts supplies PLC, DCS, HMI, controller and industrial automation spare parts worldwide.",

@@ -1,43 +1,19 @@
-import { products } from "@/data/products";
+import { readProducts } from "@/lib/catalog-server";
+import { notFound, permanentRedirect } from "next/navigation";
+import { productMeta, productSchema, breadcrumbs } from "@/lib/seo-core";
+import SeoJsonLd from "@/components/SeoJsonLd";
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import ProductImage from "@/components/ProductImage";
 
 const whatsappNumber = "13774696836";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-
-  const product = products.find(
-    (item) => item.slug.toLowerCase() === slug.toLowerCase()
-  );
-
-  if (!product) {
-    return {
-      title: "Product Not Found | GlobalPLCParts",
-    };
-  }
-
-  return {
-  title: `${product.brand} ${product.model} PLC Module Supplier | GlobalPLCParts`,
-
-  description: `${product.brand} ${product.model} ${product.category} available for industrial automation, PLC, DCS and control system applications. Request quotation from GlobalPLCParts.`,
-
-  alternates: {
-    canonical: `https://globalplcparts.com/products/${product.slug}`,
-  },
-
-  keywords: [
-      product.model,
-      product.brand,
-      product.category,
-      `${product.model} supplier`,
-      `${product.brand} ${product.model}`,
-    ],
-  };
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}) {
+ const {slug}=await params;
+ const product=readProducts().find(p=>p.slug===slug.toLowerCase());
+ if(!product) notFound();
+ if(slug!==product.slug) permanentRedirect('/products/'+product.slug);
+ return productMeta(product);
 }
 
 export default async function ProductDetailPage({
@@ -46,21 +22,14 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const products = readProducts();
 
   const product = products.find(
     (item) => item.slug.toLowerCase() === slug.toLowerCase()
   );
 
-  if (!product) {
-    return (
-      <main className="min-h-screen bg-slate-50 p-10">
-        <h1 className="text-4xl font-black mb-4">Product Not Found</h1>
-        <Link href="/products" className="text-blue-600 font-bold">
-          ← Back to Products
-        </Link>
-      </main>
-    );
-  }
+  if (!product) notFound();
+  if (slug !== product.slug) permanentRedirect(`/products/${product.slug}`);
 
   const relatedProducts = products
     .filter(
@@ -75,38 +44,11 @@ export default async function ProductDetailPage({
 
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${message}`;
 
-const productJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Product",
-  name: `${product.brand} ${product.model}`,
-  description: product.description,
-  sku: product.model,
-  mpn: product.model,
-  brand: {
-    "@type": "Brand",
-    name: product.brand,
-  },
-  category: product.category,
-  url: `https://globalplcparts.com/products/${product.slug}`,
-  offers: {
-    "@type": "Offer",
-    availability: "https://schema.org/InStock",
-    priceCurrency: "USD",
-    seller: {
-      "@type": "Organization",
-      name: "GlobalPLCParts",
-    },
-  },
-};
+const productJsonLd = [productSchema(product), breadcrumbs([["Home", "/"], ["Brands", "/brands"], [product.brand, `/brands/${product.brandSlug}`], [product.model, `/products/${product.slug}`]])];
 
 return (
   <main className="min-h-screen bg-slate-50 text-slate-900">
-  <script
-    type="application/ld+json"
-    dangerouslySetInnerHTML={{
-      __html: JSON.stringify(productJsonLd),
-    }}
-  />
+  <SeoJsonLd data={productJsonLd} />
       
 
       <section className="bg-white border-b">
@@ -119,7 +61,7 @@ return (
             Products
           </Link>
           <span className="mx-2">/</span>
-          <span>{product.model}</span>
+          <Link href={`/brands/${product.brandSlug}`}>{product.brand}</Link><span className="mx-2">/</span><span>{product.model}</span>
         </div>
       </section>
 
@@ -131,7 +73,7 @@ return (
         </div>
 
         <div className="bg-white border rounded-3xl shadow-sm p-8">
-          <p className="text-blue-600 font-black mb-4">{product.brand}</p>
+          <Link href={`/brands/${product.brandSlug}`} className="text-blue-600 font-black mb-4">{product.brand}</Link>
 
           <h1 className="text-5xl font-black leading-tight mb-4">
             {product.model}
@@ -140,16 +82,16 @@ return (
           <p className="text-xl text-slate-500 mb-6">{product.category}</p>
 
           <p className="text-slate-700 leading-8 mb-8">
-            {product.description}
+            {productMeta(product).description}
           </p>
 
           <div className="grid sm:grid-cols-2 gap-4 mb-8">
             <Info label="Brand" value={product.brand} />
             <Info label="Model" value={product.model} />
             <Info label="Category" value={product.category} />
-            <Info label="Condition" value="New / Used / Refurbished" />
+            <Info label="Condition" value="Confirm in quotation" />
             <Info label="Availability" value="Contact for Stock" />
-            <Info label="Warranty" value="12 Months Available" />
+            <Info label="Warranty" value="Confirm terms in quotation" />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
@@ -178,9 +120,7 @@ return (
           </h2>
 
           <p className="text-slate-700 leading-8 mb-6">
-            {product.brand} {product.model} is supplied by GlobalPLCParts for
-            industrial automation, PLC systems, DCS systems, factory control,
-            process automation and maintenance replacement projects.
+            GlobalPLCParts helps buyers source {product.brand} {product.model} for maintenance and replacement enquiries. Verify compatibility and specifications against your equipment documentation before ordering.
           </p>
 
           <p className="text-slate-700 leading-8">
@@ -195,7 +135,7 @@ return (
           <div className="space-y-4 text-sm text-slate-600 mb-6">
             <p>Model: {product.model}</p>
             <p>Brand: {product.brand}</p>
-            <p>Reply: Usually within 24 hours</p>
+            <p>Include the exact part number and required quantity</p>
           </div>
 
           <Link
@@ -222,41 +162,7 @@ return (
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 pb-16">
-  <div className="grid lg:grid-cols-2 gap-8">
 
-    <div className="bg-white border rounded-3xl p-8">
-      <h2 className="text-3xl font-black mb-6">
-        Applications
-      </h2>
-
-      <ul className="space-y-3">
-        <li>✓ PLC Control Systems</li>
-        <li>✓ DCS Process Automation</li>
-        <li>✓ Factory Maintenance</li>
-        <li>✓ Production Line Control</li>
-        <li>✓ Industrial Machinery</li>
-        <li>✓ Replacement Projects</li>
-      </ul>
-    </div>
-
-    <div className="bg-white border rounded-3xl p-8">
-      <h2 className="text-3xl font-black mb-6">
-        Features
-      </h2>
-
-      <ul className="space-y-3">
-        <li>✓ Worldwide Supply</li>
-        <li>✓ Fast RFQ Response</li>
-        <li>✓ Obsolete Parts Support</li>
-        <li>✓ Global Shipping</li>
-        <li>✓ Industrial Automation Expertise</li>
-        <li>✓ Quality Inspection Available</li>
-      </ul>
-    </div>
-
-  </div>
-</section>
 
 <section className="max-w-7xl mx-auto px-6 pb-16">
   <div className="bg-white border rounded-3xl p-8">

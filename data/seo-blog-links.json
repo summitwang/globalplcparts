@@ -1,0 +1,32 @@
+[
+  {
+    "postSlug": "siemens-plc-buying-guide",
+    "href": "/brands/siemens",
+    "label": "Siemens automation parts",
+    "reason": "Brand explicitly named in article title; no inferred product compatibility."
+  },
+  {
+    "postSlug": "abb-plc-module-guide",
+    "href": "/brands/abb",
+    "label": "ABB automation parts",
+    "reason": "Brand explicitly named in article title; no inferred product compatibility."
+  },
+  {
+    "postSlug": "honeywell-dcs-spare-parts-guide",
+    "href": "/brands/honeywell",
+    "label": "Honeywell automation parts",
+    "reason": "Brand explicitly named in article title; no inferred product compatibility."
+  },
+  {
+    "postSlug": "schneider-modicon-plc-overview",
+    "href": "/brands/schneider",
+    "label": "Schneider automation parts",
+    "reason": "Brand explicitly named in article title; no inferred product compatibility."
+  },
+  {
+    "postSlug": "omron-industrial-automation-guide",
+    "href": "/brands/omron",
+    "label": "Omron automation parts",
+    "reason": "Brand explicitly named in article title; no inferred product compatibility."
+  }
+]

@@ -1,11 +1,8 @@
+import { coreMeta } from "@/lib/seo-core";
 import Link from "next/link";
 import { blogPosts } from "@/data/blog-posts";
 
-export const metadata = {
-  title: "Industrial Automation Blog | GlobalPLCParts",
-  description:
-    "Industrial automation guides, PLC buying tips, DCS migration and spare parts sourcing.",
-};
+export const metadata = coreMeta("/blog");
 
 export default function BlogPage() {
   return (

@@ -1,25 +1,13 @@
 import Link from "next/link";
-import { products } from "@/data/products";
+import { readProducts } from "@/lib/catalog-server";
+import { coreMeta, brandsFor } from "@/lib/seo-core";
+export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Industrial Automation Brands | GlobalPLCParts",
-  description:
-    "Browse PLC, DCS, HMI, controller and industrial automation spare parts by brand. Request quotation from GlobalPLCParts.",
-};
+export const metadata = coreMeta("/brands");
 
 export default function BrandsPage() {
-  const brands = Array.from(
-    new Map(
-      products.map((item) => [
-        item.brandSlug,
-        {
-          name: item.brand,
-          slug: item.brandSlug,
-          count: products.filter((p) => p.brandSlug === item.brandSlug).length,
-        },
-      ])
-    ).values()
-  ).sort((a, b) => a.name.localeCompare(b.name));
+  const products = readProducts();
+  const brands = brandsFor(products);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -56,7 +44,7 @@ export default function BrandsPage() {
       <section className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid md:grid-cols-4 gap-5">
           <Info title="Total Brands" value={`${brands.length}`} />
-          <Info title="Product Database" value={`${products.length}+ Items`} />
+          <Info title="Product Database" value={`${products.length} Items`} />
           <Info title="Supply Type" value="PLC / DCS / HMI" />
           <Info title="RFQ Reply" value="Within 24 Hours" />
         </div>
@@ -91,7 +79,7 @@ export default function BrandsPage() {
               <p className="text-2xl font-black mb-2">{brand.name}</p>
 
               <p className="text-slate-500 text-sm mb-5">
-                {brand.count} products available
+                {brand.count} catalog entries
               </p>
 
               <span className="inline-block bg-blue-600 text-white px-5 py-3 rounded-xl font-black text-sm">

@@ -1,0 +1,362 @@
+[
+  {
+    "keyword": "industrial automation spare parts",
+    "category": "sourcing",
+    "landingURL": "https://globalplcparts.com/products",
+    "brand": null,
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Catalog landing; rankings not connected."
+  },
+  {
+    "keyword": "obsolete PLC parts",
+    "category": "sourcing",
+    "landingURL": "https://globalplcparts.com/request-quote",
+    "brand": null,
+    "intent": "commercial",
+    "priority": "medium",
+    "market": "Global",
+    "notes": "Sourcing enquiry; no stock guarantee."
+  },
+  {
+    "keyword": "ABB automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/abb",
+    "brand": "ABB",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "ABB AI810",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/abb-ai810",
+    "brand": "ABB",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Allen Bradley automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/allen-bradley",
+    "brand": "Allen Bradley",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Allen Bradley 1756-EN2T",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/allen-bradley-1756-en2t",
+    "brand": "Allen Bradley",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Bachmann automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/bachmann",
+    "brand": "Bachmann",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Bachmann CNT204R",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/bachmann-cnt204r",
+    "brand": "Bachmann",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Bently Nevada automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/bently-nevada",
+    "brand": "Bently Nevada",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Bently Nevada 3500/22M",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/bently-nevada-3500-22m",
+    "brand": "Bently Nevada",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Emerson automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/emerson",
+    "brand": "Emerson",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Emerson KJ3001X1-BB1",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/emerson-kj3001x1-bb1",
+    "brand": "Emerson",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Foxboro automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/foxboro",
+    "brand": "Foxboro",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Foxboro FBM201",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/foxboro-fbm201",
+    "brand": "Foxboro",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "GE Fanuc automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/ge-fanuc",
+    "brand": "GE Fanuc",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "GE Fanuc IC693CPU374",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/ge-fanuc-ic693cpu374",
+    "brand": "GE Fanuc",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "HIMA automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/hima",
+    "brand": "HIMA",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "HIMA BT-21-LE-S",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/hima-bt-21-le-s",
+    "brand": "HIMA",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Honeywell automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/honeywell",
+    "brand": "Honeywell",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Honeywell CC-PAIX01",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/honeywell-cc-paix01",
+    "brand": "Honeywell",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Mitsubishi automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/mitsubishi",
+    "brand": "Mitsubishi",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Mitsubishi Q02CPU",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/mitsubishi-q02cpu",
+    "brand": "Mitsubishi",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Omron automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/omron",
+    "brand": "Omron",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Omron CJ1M-CPU13",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/omron-cj1m-cpu13",
+    "brand": "Omron",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "ProSoft automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/prosoft",
+    "brand": "ProSoft",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "ProSoft MVI71-DNPSNET",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/prosoft-mvi71-dnpsnet",
+    "brand": "ProSoft",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Rexroth automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/rexroth",
+    "brand": "Rexroth",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Rexroth MSK061C-0600-NN-M1-UP1-NNNN",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/rexroth-msk061c-0600-nn-m1-up1-nnnn",
+    "brand": "Rexroth",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Schneider automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/schneider",
+    "brand": "Schneider",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Schneider 140CPU67160",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/schneider-140cpu67160",
+    "brand": "Schneider",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Siemens automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/siemens",
+    "brand": "Siemens",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Siemens 6ES7315-2EH14-0AB0",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/siemens-6es7315-2eh14-0ab0",
+    "brand": "Siemens",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Woodward automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/woodward",
+    "brand": "Woodward",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Woodward 9907-149",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/woodward-9907-149",
+    "brand": "Woodward",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  },
+  {
+    "keyword": "Yokogawa automation parts",
+    "category": "brand",
+    "landingURL": "https://globalplcparts.com/brands/yokogawa",
+    "brand": "Yokogawa",
+    "intent": "commercial",
+    "priority": "high",
+    "market": "Global",
+    "notes": "Existing brand catalog; no manufacturer authorization implied."
+  },
+  {
+    "keyword": "Yokogawa AAI143-H00",
+    "category": "model",
+    "landingURL": "https://globalplcparts.com/products/yokogawa-aai143-h00",
+    "brand": "Yokogawa",
+    "intent": "transactional",
+    "priority": "high",
+    "market": "Global",
+    "notes": "One representative existing part per brand; confirm exact requirements by RFQ."
+  }
+]

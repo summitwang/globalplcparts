@@ -1,33 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
-import { products } from "@/data/products";
+import { readProducts } from "@/lib/catalog-server";
+import { coreMeta, homeSchema, brandsFor } from "@/lib/seo-core";
+import SeoJsonLd from "@/components/SeoJsonLd";
+export const dynamic = "force-dynamic";
 import ProductImage from "@/components/ProductImage";
 
 const whatsappNumber = "13774696836";
 
-export const metadata = {
-  title: "GlobalPLCParts | PLC, DCS, HMI & Industrial Automation Parts Supplier",
-  description:
-    "GlobalPLCParts supplies PLC, DCS, HMI, drives, controllers and industrial automation spare parts worldwide. Search part numbers and request fast RFQ.",
-};
+export const metadata = coreMeta("/");
 
 export default function HomePage() {
+  const products = readProducts();
   const featuredProducts = products.slice(0, 8);
 
-  const brands = Array.from(
-    new Map(
-      products.map((item) => [
-        item.brandSlug,
-        {
-          name: item.brand,
-          slug: item.brandSlug,
-          count: products.filter((p) => p.brandSlug === item.brandSlug).length,
-        },
-      ])
-    ).values()
-  )
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 12);
+  const brands = brandsFor(products).sort((a, b) => b.count - a.count).slice(0, 12);
 
   const popularModels = products.slice(0, 12);
 
@@ -37,6 +24,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
+      <SeoJsonLd data={homeSchema()} />
       {/* HERO */}
       <section className="relative overflow-hidden bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-14 grid lg:grid-cols-2 gap-12 items-center">

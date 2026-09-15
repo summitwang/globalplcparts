@@ -24,7 +24,7 @@ const RATE_NUMERATORS = Object.freeze({ svgImagePercent: "svgImageRecords", heav
 const TEXT_INPUTS = Object.freeze([
   "data/products.json", "data/blog-posts.ts", "package.json",
   "docs/SCRIPTS-SAFETY-REGISTRY.md", "app/layout.tsx",
-  "app/sitemap.ts", "app/robots.ts", "app/products/[slug]/page.tsx",
+  "app/sitemap.xml/route.ts", "app/robots.ts", "app/products/[slug]/page.tsx",
   "app/brands/[slug]/page.tsx", "app/blog/[slug]/page.tsx",
 ]);
 const ROUTES = Object.freeze([
@@ -41,6 +41,7 @@ function approvedRuntimePath(relative) {
   if (typeof relative !== "string" || /[\\\x00-\x1f]/.test(relative) || relative.split("/").some(p => !p || p === "." || p === "..")) return false;
   if (RUNTIME_DATA.some(name => relative === `data/${name}` || new RegExp(`^data/${name.replaceAll(".", "\\.")}\\.${UUID}\\.tmp$`).test(relative))) return true;
   if (["data/classic-complete-catalog.lock", "data/classic-complete-catalog.lock.recovery"].includes(relative)) return true;
+  if (["audit.json", "audit.md", "status.json", "status.md", "content-improvement.json", "content-improvement.md", "internal-links.json", "keywords.csv"].some(name => relative === `reports/seo/${name}`)) return true;
   const transient = `(?:\\.${UUID}\\.tmp)?`;
   if (new RegExp(`^reports/classic-complete/status\\.(?:json|md)${transient}$`).test(relative)) return true;
   if (new RegExp(`^reports/classic-complete/${UUID}(?:\\.${UUID}\\.tmp)?/(?:completion\\.json|final-state\\.json|summary\\.md)${transient}$`).test(relative)) return true;
@@ -384,9 +385,9 @@ function collect({ root = ROOT, readGit = gitSnapshot, beforeVerify = () => {} }
       m.detailPagesWithStructuredDataMarker += Number(source.includes("application/ld+json"));
     }
     m.layoutMetadataMarker = Number(snapshot.read("app/layout.tsx").includes("metadata"));
-    m.sitemapCatalogMarker = Number(snapshot.read("app/sitemap.ts").includes("products"));
-    m.sitemapBlogMarker = Number(snapshot.read("app/sitemap.ts").includes("blogPosts"));
-    m.sitemapCurrentDateMarker = Number(snapshot.read("app/sitemap.ts").includes("new Date()"));
+    m.sitemapCatalogMarker = Number(snapshot.read("app/sitemap.xml/route.ts").includes("products"));
+    m.sitemapBlogMarker = Number(snapshot.read("app/sitemap.xml/route.ts").includes("blogPosts"));
+    m.sitemapCurrentDateMarker = Number(snapshot.read("app/sitemap.xml/route.ts").includes("new Date()"));
     m.robotsSitemapMarker = Number(snapshot.read("app/robots.ts").includes("sitemap"));
     const scripts = snapshot.read("scripts", "directory");
     const registry = snapshot.read("docs/SCRIPTS-SAFETY-REGISTRY.md");

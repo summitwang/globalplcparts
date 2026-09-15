@@ -267,7 +267,7 @@ function checkArchitecture() {
     "app/brands/[slug]/page.tsx",
     "app/blog/[slug]/page.tsx",
   ]);
-  checkFiles("SEO handlers", ["app/robots.ts", "app/sitemap.ts"]);
+  checkFiles("SEO handlers", ["app/robots.ts", "app/sitemap.xml/route.ts"]);
   checkFiles("RFQ route structure", [
     "app/api/rfq/route.ts",
     "app/api/rfq/quote/route.ts",
