@@ -39,3 +39,29 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated automation output; tracked Release v1 legacy files remain tracked.
+# Never force-add these outputs. See docs/releases/PRODUCTION-RELEASE-v1.md.
+/data/classic-complete-crawl-state.json
+/data/classic-complete-state-v1-backup.json
+/data/classic-complete-sweep-baseline.json
+/data/classic-complete-original-catalog.json
+/data/classic-complete-last-run.json
+/data/classic-complete-catalog.lock
+/data/classic-complete-catalog.lock.recovery
+/data/classic-complete-*.json.*.tmp
+/data/products.json.*.tmp
+/data/product-image-repairs.json
+/data/product-image-repairs.json.*.tmp
+/reports/classic-complete/
+/reports/product-image-integrity/
+/reports/seo/
+/data/classic-crawl-state.json
+/data/image-cache-v20.json
+/data/image-cache-v21.json
+/data/image-library-needed.json
+/data/image-state-v20.json
+/data/image-state-v21.json
+/data/import-log.json
+/data/products-scraped.json
+/data/reports/image-check-report.json

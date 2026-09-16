@@ -6,9 +6,9 @@
   "baseOriginCommit": "6f0772505967e1a1300b4dfe613e6b7331dd232b",
   "codeHead": "55feca433be39cd48cdc265dd35a5d3b430de3f9",
   "releaseHead": {
-    "ref": "refs/tags/production-release-v1",
-    "resolveCommand": "git rev-parse refs/tags/production-release-v1^{commit}",
-    "note": "The local tag is created only after this manifest and payload are committed. A commit cannot contain its own literal hash. The final report and resolved sidecar provide the resolved hash."
+    "ref": "refs/tags/production-release-v1-revision-2",
+    "resolveCommand": "git rev-parse refs/tags/production-release-v1-revision-2^{commit}",
+    "note": "New immutable local revision tag; original production-release-v1 tag preserved. Final report records resolved HEAD; a commit cannot embed its own hash."
   },
   "releaseBranch": "release/production-v1",
   "releaseCheckout": "C:/Projects/globalplcparts-release-v1",
@@ -61,11 +61,17 @@
     "canonicalHost": "https://globalplcparts.com",
     "environmentIndependent": true,
     "requiredRouting": "www to apex, permanent 301 or 308, retaining path and query; apex serves application",
-    "currentConflict": "Observed apex HTTP 307 to www. No repository redirect rule; exact external provider rule UNKNOWN.",
+    "currentConflict": null,
     "robots": "PASS local release HTTP",
     "sitemap": "PASS local release HTTP",
     "notFound": "PASS HTTP 404",
-    "structuredData": "PASS serialization and no fabricated offers"
+    "structuredData": "PASS serialization and no fabricated offers",
+    "currentRouting": {
+      "apex": "globalplcparts.com -> Production",
+      "www": "www.globalplcparts.com -> 308 Permanent Redirect -> globalplcparts.com",
+      "evidence": "User manually verified Vercel; preceding read-only HTTP preflight confirmed apex robots 200 and www robots 308 to apex.",
+      "dnsMigrationPerformed": false
+    }
   },
   "commitsIncluded": {
     "reviewed": [
@@ -77,12 +83,14 @@
       "56ef9cf4f96c43eed0b5418d8047f071f2d1151d",
       "55feca433be39cd48cdc265dd35a5d3b430de3f9"
     ],
-    "releaseCommit": "refs/tags/production-release-v1"
+    "releaseCommit": "refs/tags/production-release-v1-revision-2",
+    "originalReleaseCommit": "1aee69ccda921fde7bbfb249871642ba62ca8a6c"
   },
   "filesIncluded": {
     "scope": "Complete Git tree at releaseHead; changed files relative to origin baseline enumerated below",
     "changedFromOrigin": [
       ".gitattributes",
+      ".gitignore",
       "app/admin/layout.tsx",
       "app/api/admin/scraper/start/route.ts",
       "app/blog/[slug]/page.tsx",
@@ -145,7 +153,8 @@
       "docs/releases/PRODUCTION-RELEASE-v1.md",
       "docs/releases/PRODUCTION-RELEASE-v1.json",
       "docs/releases/PRODUCTION-RELEASE-v1.catalog-diff.json",
-      "docs/releases/verify-production-release-v1.cjs"
+      "docs/releases/verify-production-release-v1.cjs",
+      ".gitignore"
     ],
     "excluded": [
       ".env*",
@@ -156,7 +165,8 @@
       "temporary files",
       "node_modules",
       ".next"
-    ]
+    ],
+    "exclusionScope": "New release artifacts only; nine unchanged inherited paths explicitly accepted in legacyArtifactException."
   },
   "validation": {
     "node": "v24.20.0",
@@ -194,42 +204,40 @@
     },
     "catalogIntegrity": "PASS",
     "imageIntegrity": "PASS",
-    "secretScan": "PASS: inherited seven-commit gate plus release-specific artifact scan; known synthetic validation/test placeholders are not credentials"
+    "secretScan": "PASS: nine legacy files and revision documents scanned; prior release-chain scan retained. Verified synthetic URL-rejection test fixtures are not credentials. No values printed.",
+    "revisionValidation": "Documentation/manifest/.gitignore only; existing build/lint/SEO/HTTP results reused. Lightweight catalog, manifest, Git, ignore-rule and secret checks required before final readiness."
   },
   "deployment": {
-    "triggerClassification": "D",
-    "trigger": "Cannot be determined locally",
+    "triggerClassification": "Confirmed by owner",
+    "trigger": "Every push to main creates a Vercel Production Deployment",
     "evidence": [
-      "No tracked .github workflows",
-      "No vercel.json",
-      "No local .vercel/project.json link",
-      "Public Vercel responses do not establish Git integration settings"
+      "User manually confirmed production branch and push trigger",
+      "User manually confirmed production domain routing"
     ],
-    "productionGitCommit": "UNKNOWN",
+    "productionGitCommit": "6f0772505967e1a1300b4dfe613e6b7331dd232b",
     "productionDeploymentId": "UNKNOWN",
     "productionConfigurationChanged": false,
     "requires": [
-      "Owner verifies production branch and push/deploy triggers",
-      "Owner records actual rollback deployment ID and current domain rules",
-      "Approve www-to-apex routing correction",
-      "Rebuild source with verified platform production environment variables",
-      "Explicit authorization before push, preview publication or production promotion"
-    ]
+      "Explicit authorization before push: pushing main is a production action",
+      "Vercel rebuilds committed source with configured production variables; never publish placeholder local build output",
+      "Before any separately approved rollback, resolve owner-confirmed rollback commit to Vercel deployment"
+    ],
+    "productionBranch": "main"
   },
   "rollback": {
-    "ready": false,
-    "reason": "Actual deployed commit/deployment ID and provider routing configuration UNKNOWN",
+    "ready": true,
+    "reason": "Owner confirmed rollback production commit and domain routing; Vercel deployment ID has not been supplied.",
     "previousCatalogRecoverable": true,
     "previousCatalogCommit": "6f0772505967e1a1300b4dfe613e6b7331dd232b",
     "previousCatalogGitBlob": "11d4101df55db593a7b119d198036b43fbfb427b",
     "previousCatalogSha256": "8be2ea82b3ffd936eb533fc98eb2b53701ba6edf0cd12a7ee8f3f11d45763957",
     "procedure": [
-      "Record actual current Vercel deployment ID and domain redirect settings before any publication",
-      "On failure re-promote that immutable deployment with its paired catalog and assets",
-      "Restore only the previously recorded domain-routing configuration",
-      "If Git recovery is needed create a reviewed revert/recovery commit or checkout; never force push/reset the active crawler",
-      "The previous 5288-product JSON remains recoverable from the specified Git commit/blob; that is not proof of the current production deployment identity"
-    ]
+      "Resolve owner-confirmed rollback commit to its Vercel deployment before separately authorized rollback",
+      "Re-promote matching application/catalog/assets; preserve confirmed routing unless separately authorized",
+      "Git recovery requires reviewed recovery/revert commit; never force push/reset active crawler",
+      "Rollback restores previous 5288-product catalog and previous image references"
+    ],
+    "productionCommit": "6f0772505967e1a1300b4dfe613e6b7331dd232b"
   },
   "activeCrawler": {
     "checkout": "C:/Projects/globalplcparts",
@@ -241,5 +249,123 @@
   "deploymentPerformed": false,
   "productionMutationPerformed": false,
   "packageReady": true,
-  "productionPromotionReady": false
+  "productionPromotionReady": true,
+  "revisedAt": "2026-09-16T08:56:38.716Z",
+  "legacyArtifactException": {
+    "title": "LEGACY ARTIFACT EXCEPTION - RELEASE v1",
+    "scope": "Release v1 only",
+    "authorizedBy": "Explicit user policy decision",
+    "baseCommit": "6f0772505967e1a1300b4dfe613e6b7331dd232b",
+    "files": [
+      {
+        "path": "data/classic-crawl-state.json",
+        "baseBlob": "7ae825cc85ab3ba3e38d6040090e4e5809d53bca",
+        "releaseBlob": "7ae825cc85ab3ba3e38d6040090e4e5809d53bca",
+        "inherited": true,
+        "newlyIntroduced": false,
+        "changedInReleaseChain": false,
+        "dependency": "Historical product-expansion-v18.js checkpoint; no public application/build dependency found.",
+        "deletionRisk": "Deleting resets historical crawler progress."
+      },
+      {
+        "path": "data/image-cache-v20.json",
+        "baseBlob": "7593a35108c432c7ca64b5101ee24fb0bf22dae3",
+        "releaseBlob": "7593a35108c432c7ca64b5101ee24fb0bf22dae3",
+        "inherited": true,
+        "newlyIntroduced": false,
+        "changedInReleaseChain": false,
+        "dependency": "Historical product-image-engine-v20.js cache; no application/build dependency found.",
+        "deletionRisk": "Deleting discards cache and can repeat network work."
+      },
+      {
+        "path": "data/image-cache-v21.json",
+        "baseBlob": "3ca815512df3bad56da8dafb9d4a76880758d286",
+        "releaseBlob": "3ca815512df3bad56da8dafb9d4a76880758d286",
+        "inherited": true,
+        "newlyIntroduced": false,
+        "changedInReleaseChain": false,
+        "dependency": "Historical product-image-engine-v21.js and v21-5.js cache; no application/build dependency found.",
+        "deletionRisk": "Deleting discards cache and can repeat network work."
+      },
+      {
+        "path": "data/image-library-needed.json",
+        "baseBlob": "43c21b51ca1bc757ee3f460888c7025a0c287fd9",
+        "releaseBlob": "43c21b51ca1bc757ee3f460888c7025a0c287fd9",
+        "inherited": true,
+        "newlyIntroduced": false,
+        "changedInReleaseChain": false,
+        "dependency": "image-library-audit-v6.js generated output; no application/build input found.",
+        "deletionRisk": "Deleting loses audit evidence; explicit audit can regenerate."
+      },
+      {
+        "path": "data/image-state-v20.json",
+        "baseBlob": "0d920b3faedae42683c7364d8ed0fcfc1663d505",
+        "releaseBlob": "0d920b3faedae42683c7364d8ed0fcfc1663d505",
+        "inherited": true,
+        "newlyIntroduced": false,
+        "changedInReleaseChain": false,
+        "dependency": "Historical product-image-engine-v20.js progress; no application/build dependency found.",
+        "deletionRisk": "Deleting resets historical image-engine progress."
+      },
+      {
+        "path": "data/image-state-v21.json",
+        "baseBlob": "533d24245033779b58be696bb10993e55b65eab7",
+        "releaseBlob": "533d24245033779b58be696bb10993e55b65eab7",
+        "inherited": true,
+        "newlyIntroduced": false,
+        "changedInReleaseChain": false,
+        "dependency": "Historical product-image-engine-v21.js and v21-5.js progress; no application/build dependency found.",
+        "deletionRisk": "Deleting resets historical image-engine progress."
+      },
+      {
+        "path": "data/import-log.json",
+        "baseBlob": "efaa87d22970b1f9da987f6226836ee74e7a1711",
+        "releaseBlob": "efaa87d22970b1f9da987f6226836ee74e7a1711",
+        "inherited": true,
+        "newlyIntroduced": false,
+        "changedInReleaseChain": false,
+        "dependency": "app/api/admin/scraper/start/route.ts reads/appends import history, with missing-file empty-array fallback.",
+        "deletionRisk": "Deleting loses import history; does not prevent build or route operation."
+      },
+      {
+        "path": "data/products-scraped.json",
+        "baseBlob": "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
+        "releaseBlob": "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
+        "inherited": true,
+        "newlyIntroduced": false,
+        "changedInReleaseChain": false,
+        "dependency": "scrape-products.js staging output; no application/build input found.",
+        "deletionRisk": "Currently empty; deletion removes historical staging output."
+      },
+      {
+        "path": "data/reports/image-check-report.json",
+        "baseBlob": "8df39f815965ba01e2ddc0f1835cd7c3607a9ded",
+        "releaseBlob": "8df39f815965ba01e2ddc0f1835cd7c3607a9ded",
+        "inherited": true,
+        "newlyIntroduced": false,
+        "changedInReleaseChain": false,
+        "dependency": "check-product-images.js output; no application/build input found.",
+        "deletionRisk": "Deleting loses audit report; explicit image check can regenerate."
+      }
+    ],
+    "newlyIntroduced": 0,
+    "changedInReleaseChain": 0,
+    "secretScan": "PASS: no pattern-scan candidates; not a guarantee of absence",
+    "futurePolicy": "No new runtime artifacts, locks, backups, secrets or moving crawler state. Do not force-add ignored output. Ignore rules do not untrack files or prevent tracked changes. Review staged diffs against base; unchanged legacy exceptions only. Removal is separate post-release maintenance."
+  },
+  "productionEnvironment": {
+    "names": [
+      "ADMIN_PASSWORD",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "RESEND_API_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "SUPABASE_URL"
+    ],
+    "evidence": "User visually verified variable-name entries in Vercel for Production/Preview where shown. Values not inspected, recorded or requested. Names match application code and local health documentation.",
+    "verifiedBy": "User",
+    "valuesVerifiedByAgent": false
+  },
+  "productionActionAuthorized": false,
+  "readinessScope": "Preflight ready under Release v1 legacy exception; no push or deployment authorized."
 }

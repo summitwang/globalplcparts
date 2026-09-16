@@ -1,115 +1,90 @@
-# PRODUCTION RELEASE v1
+# PRODUCTION RELEASE v1 - revision 2
 
-This is a frozen local release candidate, not a published deployment. Package preparation is complete; production promotion remains blocked by the owner-verification items below.
+Frozen local release; no publication or production mutation performed.
 
 ## Immutable identity
 
-- Frozen: 2026-09-16T03:16:33.733Z (11:16:33.733 Singapore, 16 September 2026).
-- Base origin/main: 6f0772505967e1a1300b4dfe613e6b7331dd232b.
-- Reviewed code HEAD: 55feca433be39cd48cdc265dd35a5d3b430de3f9.
-- Release HEAD: resolve local tag **production-release-v1** with `git rev-parse refs/tags/production-release-v1^{commit}`. The tag is created after the commit and must never be moved. A commit cannot embed its own hash; the resolved receipt and final report supply the literal hash.
-- Release branch: release/production-v1. Checkout: C:\Projects\globalplcparts-release-v1.
-- Publication catalog SHA-256: 8dc277d9d5e09daf1cc8c3765b7b0e806414608824a6b22cfb3eee045141571c.
-- Raw frozen snapshot SHA-256: 71aa14c948425945aa8dd5aa0aaf7c19b6ccda919f933c77c3702bd93ffbd65e.
+- Base / owner-confirmed rollback production commit: 6f0772505967e1a1300b4dfe613e6b7331dd232b.
+- Original release commit: 1aee69ccda921fde7bbfb249871642ba62ca8a6c; original local tag production-release-v1 is preserved.
+- Revised HEAD: resolve immutable local tag production-release-v1-revision-2 using `git rev-parse refs/tags/production-release-v1-revision-2^{commit}`. Tag is created after this commit; final report records the literal hash.
+- Branch: release/production-v1. Checkout: C:/Projects/globalplcparts-release-v1.
+- Frozen at: 2026-09-16T03:16:33.733Z.
+- Catalog: **13,695 products**; SHA256 **8dc277d9d5e09daf1cc8c3765b7b0e806414608824a6b22cfb3eee045141571c**.
+- Raw frozen snapshot SHA256: 71aa14c948425945aa8dd5aa0aaf7c19b6ccda919f933c77c3702bd93ffbd65e.
+- Reviewed application code HEAD: 55feca433be39cd48cdc265dd35a5d3b430de3f9. Revision changes only release documentation, manifest and narrow .gitignore safeguards.
 
-The raw catalog was read once from the atomically replaced crawler file, parsed and validated, then frozen outside Git. Publication removes only acquisition metadata from 8,407 records. It preserves all other fields, including source URLs, identity, slugs, brand, descriptions, existing public metadata and image references. No later acquisition is included. The publication file is committed with LF enforced for reproducible cross-platform hashing.
+## Catalog and validation
 
-## Catalog review
+Unchanged publication retains all 5,288 original products and adds 8,407 frozen products. Only acquisition metadata was removed from additions. No moving crawler snapshot was copied. Both approved image-only repairs remain: siemens-s7-400 and siemens-et200 use /product-images/default.jpg. Zero duplicate identities, duplicate slugs or broken image references; 1,570 unique image files referenced.
 
-Previous public/Git catalog: 5,288. Frozen publication: **13,695**. ClassicAutomation source label: **12,697**. Added: **8,407**. Removed: **0**. Existing records changed: **2**, image field only:
+Sitemap: **14,577 URLs**, product chunks 5,000 / 5,000 / 3,695. Canonical: **https://globalplcparts.com**.
 
-- siemens-s7-400: /product-images/real/siemens/siemens-s7-400.jpg -> /product-images/default.jpg
-- siemens-et200: /product-images/real/siemens/siemens-et200.jpg -> /product-images/default.jpg
+Prior validation remains applicable: 57 SEO tests, 29 local HTTP checks, production build/TypeScript PASS, lint PASS with existing ProductImage warning, health 15 PASS / 4 WARN / 0 FAIL during preparation. No application code/dependencies change. Lightweight verification:
 
-The canonical fallback JPEG and all 1,570 referenced image files are already in the inherited reviewed Git tree. Invalid old image files remain unreferenced; nothing was deleted. Every original product is retained. No runtime state, receipt, backup, lock or operational acquisition object is published.
-
-Machine-readable review: [catalog diff](PRODUCTION-RELEASE-v1.catalog-diff.json). Machine-readable full manifest: [release manifest](PRODUCTION-RELEASE-v1.json). The manifest lists the complete changed-file set and all seven inherited commit hashes, plus the release tag.
-
-## Reproducible validation
-
-Run these from this isolated checkout, never the active crawler checkout:
-
-    npm.cmd ci --offline --ignore-scripts --no-audit --no-fund
     node docs/releases/verify-production-release-v1.cjs
-    node --test scripts/seo-operations.test.js
-    npm.cmd run lint
-    node node_modules/eslint/bin/eslint.js scripts/seo-operations-report.js scripts/seo-operations.test.js scripts/seo-http-test.js docs/releases/verify-production-release-v1.cjs
-    npm.cmd run health-check
 
-If the lockfile packages are not cached on another machine, obtain approval for registry access before installing the same lockfile; do not update dependencies.
+Do not deploy local .next output; earlier build used synthetic configuration. Vercel must rebuild committed source with configured Production variables. No customer/RFQ/payment/supplier operation performed.
 
-For a local source-build check without copying credentials, use process-only validation values:
+## LEGACY ARTIFACT EXCEPTION ? RELEASE v1
 
-    $env:NEXT_PUBLIC_SUPABASE_URL='https://release-validation.invalid'
-    $env:NEXT_PUBLIC_SUPABASE_ANON_KEY='release-validation-placeholder'
-    $env:SUPABASE_URL='https://release-validation.invalid'
-    $env:SUPABASE_SERVICE_ROLE_KEY='release-validation-placeholder'
-    $env:RESEND_API_KEY='release-validation-placeholder'
-    npm.cmd run build
-    node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3101
+These nine paths exist unchanged in production base 6f0772505967e1a1300b4dfe613e6b7331dd232b. None was introduced or changed anywhere in the release commit chain. User explicitly accepts them for Release v1 only. They are not newly generated release artifacts.
 
-In a second terminal in the release checkout:
+| Inherited path | Direct dependency | Immediate deletion risk |
+|---|---|---|
+| data/classic-crawl-state.json | Historical product-expansion-v18.js checkpoint; no public application/build dependency found. | Deleting resets historical crawler progress. |
+| data/image-cache-v20.json | Historical product-image-engine-v20.js cache; no application/build dependency found. | Deleting discards cache and can repeat network work. |
+| data/image-cache-v21.json | Historical product-image-engine-v21.js and v21-5.js cache; no application/build dependency found. | Deleting discards cache and can repeat network work. |
+| data/image-library-needed.json | image-library-audit-v6.js generated output; no application/build input found. | Deleting loses audit evidence; explicit audit can regenerate. |
+| data/image-state-v20.json | Historical product-image-engine-v20.js progress; no application/build dependency found. | Deleting resets historical image-engine progress. |
+| data/image-state-v21.json | Historical product-image-engine-v21.js and v21-5.js progress; no application/build dependency found. | Deleting resets historical image-engine progress. |
+| data/import-log.json | app/api/admin/scraper/start/route.ts reads/appends import history, with missing-file empty-array fallback. | Deleting loses import history; does not prevent build or route operation. |
+| data/products-scraped.json | scrape-products.js staging output; no application/build input found. | Currently empty; deletion removes historical staging output. |
+| data/reports/image-check-report.json | check-product-images.js output; no application/build input found. | Deleting loses audit report; explicit image check can regenerate. |
 
-    node scripts/seo-http-test.js http://127.0.0.1:3101
+No public-page or build requirement found. Admin import-history route reads import-log.json with empty-array fallback; historical scripts use noted state/cache files. This is static dependency inspection, not execution. No files deleted or untracked.
 
-Do not deploy this local .next output: it deliberately contains placeholder public environment configuration. The approved deployment must rebuild the committed source with verified project production variables. No .env file was copied or committed, and no RFQ, payment, customer or supplier operation was executed.
+Future runtime artifacts are NOT authorized. Hygiene/removal is separate post-release maintenance. Narrow .gitignore rules cover known crawler checkpoints/backups/locks/temporary files, image-repair ledger, generated report directories and exact legacy output paths. Legitimate data such as products.json, SEO inventories, fixtures and source code remain eligible for tracking.
 
-Completed results: **57 SEO tests**, **29 HTTP checks**, production build/TypeScript PASS, catalog/image integrity PASS with zero duplicates and zero broken images. Lint PASS with the existing ProductImage native-img warning; verifier lint PASS. Health **15 PASS / 4 WARN / 0 FAIL** during preparation (expected dirty release worktree, image fallbacks/reuse, historical script inventory). Sitemap **14,577 URLs**, with product chunks **5,000 / 5,000 / 3,695**. HTTP checks cover robots, sitemap index/children, canonical host, true 404s, redirects and JSON-LD. The existing blog editorial warnings are not silently removed.
+**.gitignore does not untrack existing files, prevent tracked changes, or prohibit force-add.** Do not force-add runtime output. Before future releases inspect staged diffs and the complete release change set against base. Reject new runtime artifacts or changes to these nine paths without separate explicit review/authorization. Never copy moving crawler state into a frozen release.
 
-## Canonical/domain decision
+Pattern-based secret scans cover accepted legacy files and release-chain text changes. No candidates detected; no values printed. This is not a guarantee that every historical secret is absent.
 
-Selected host: **https://globalplcparts.com**. Code canonicals, sitemap URLs, robots sitemap reference, Open Graph and structured data agree on apex, with no SEO environment-variable dependency. No repository configuration forces apex to www.
+## Domain routing and deployment trigger
 
-Prior read-only public checks found HTTP 307 apex -> www, while www serves the application. This is external deployment/domain routing; the exact Vercel/Cloudflare rule has not been verified. Required owner-reviewed configuration plan:
+Owner manually verified in Vercel:
 
-1. Inspect Vercel Project Settings > Domains and Cloudflare redirect/worker rules for both existing hosts. Record current settings before editing. Identify the single rule producing apex -> www; do not alter unrelated rules.
-2. After explicit authorization, configure apex as the serving production domain and www as a permanent 301/308 redirect to apex, preserving path/query. Remove/replace only the conflicting apex -> www redirect. No DNS change is planned merely to reverse a redirect; verify existing host attachments first.
-3. Confirm no redirect loop: apex serves 200 for valid pages, www redirects once to matching apex path/query. Check robots.txt, sitemap.xml, every sitemap child, representative product/brand/blog pages and missing-record 404s.
-4. Repeat canonical/OG/JSON-LD checks on the public production origin after the separately approved promotion.
+- globalplcparts.com -> Production
+- www.globalplcparts.com -> 308 Permanent Redirect -> globalplcparts.com
+- Production Branch: main
+- Every push to main creates a Production Deployment.
 
-No DNS, Cloudflare, Vercel or production configuration was changed here.
+Preceding read-only HTTP preflight confirmed apex robots.txt 200 and www robots.txt 308 to matching apex path. Previous routing conflict resolved. No DNS migration performed or claimed; Codex changed no Vercel, Cloudflare or DNS settings.
 
-## Deployment trigger and rollback identity
+## Production environment evidence
 
-Classification **D: cannot be determined locally**. No tracked deployment workflow/vercel.json or local Vercel project link establishes the production branch or Git integration behavior. Public Vercel response headers are not proof that a main push deploys production. Treat main push as potentially production-impacting until the owner verifies the actual settings.
+User visually verified variable-name entries in Vercel for Production/Preview where shown:
 
-Actual production Git commit: **UNKNOWN**. Actual production deployment ID: **UNKNOWN**. Do not substitute origin/main or X-Vercel-Id (request identity) for the deployed commit/deployment identity.
+- ADMIN_PASSWORD
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- NEXT_PUBLIC_SUPABASE_URL
+- RESEND_API_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- SUPABASE_URL
 
-The old 5,288-product catalog remains recoverable from commit 6f0772505967e1a1300b4dfe613e6b7331dd232b, blob 11d4101df55db593a7b119d198036b43fbfb427b. Rollback readiness is **NO** until the actual deployed application/asset identity and domain rules are recorded. The manifest contains its catalog SHA-256.
+Names match application code and local health-check inventory. Server Supabase URL/key have public-variable fallbacks. Values neither inspected nor recorded/requested. Visual evidence establishes entry presence, not live transaction or secret-value validation.
 
-## Exact push/promotion sequence ? not executed
+## Publication and rollback - not executed
 
-1. Owner verifies Vercel/GitHub production branch, automatic deployment triggers and branch protection; records the current production deployment ID and domain configuration. Obtain explicit authorization before any push/preview publication or production change.
-2. From the release checkout, verify catalog SHA and release tag. Fetch remote main and require it still to be an ancestor of the tagged release. Stop on any failed check or unexpected branch/tag state. Do not rewrite history.
+Publication requires separate explicit authorization because pushing main triggers Production. Recheck remote main, clean checkout, immutable tag and catalog immediately beforehand. Stop if remote main differs from reviewed base. Do not force push or silently rebase.
 
-       git fetch origin main
-       git rev-parse refs/tags/production-release-v1^{commit}
-       git merge-base --is-ancestor origin/main refs/tags/production-release-v1
-       git status --porcelain
-       node docs/releases/verify-production-release-v1.cjs
+Proposed command, only after separate authorization:
 
-3. After confirming release-branch pushes cannot automatically promote production, publish only the reviewed release branch, if explicitly authorized:
+    git push origin refs/tags/production-release-v1-revision-2:refs/heads/main
 
-       git push --dry-run origin refs/heads/release/production-v1:refs/heads/release/production-v1
-       git push origin refs/heads/release/production-v1:refs/heads/release/production-v1
-
-4. Rebuild and validate an explicitly approved preview with the project's verified environment. Preview must contain the exact frozen catalog hash/count, repaired images and expected SEO behavior. Do not run customer transactions for these checks.
-5. Obtain final promotion and routing approval. Use the verified platform workflow. If main push is the production trigger, require the same tagged release and ancestry checks immediately before pushing; respect branch protection/PR requirements:
-
-       git push --dry-run origin refs/tags/production-release-v1:refs/heads/main
-       git push origin refs/tags/production-release-v1:refs/heads/main
-
-The tag is lightweight and resolves to the exact release commit. No force options. If remote main advanced divergently, stop and review; do not force, reset or silently rebase the frozen candidate. A tag push, if separately desired, is also a publication action and was not performed.
-6. Promote the exact validated source/deployment and apply only the authorized domain-routing correction. Verify public catalog count, source snapshot, both Siemens image paths, robots, sitemap index/chunks, canonical host, noindex and 404 behavior.
-
-## Rollback procedure
-
-Before promotion record the exact current deployment ID, its Git/artifact identity, environment configuration names, matching catalog/assets and the precise host routing. On failure re-promote that known-good immutable deployment and restore only the recorded routing configuration. Do not fabricate a rollback target from the local base hash. If a Git-based recovery is required, prepare a reviewed revert/recovery commit or separate checkout at the known-good deployment commit; never force push or reset the active crawler checkout. The prior catalog can be inspected with:
-
-    git show 6f0772505967e1a1300b4dfe613e6b7331dd232b:data/products.json
-
-Application, catalog and assets roll back together. Restoring the prior production deployment may temporarily restore its 5,288-product catalog and old image references; make that explicit to the owner. Keep the new release tag and the active crawler's newer runtime catalog/checkpoint intact for diagnosis and a later release.
+Owner-confirmed rollback production commit: 6f0772505967e1a1300b4dfe613e6b7331dd232b. Vercel deployment ID not supplied; resolve known commit to its deployment before separately approved rollback. Re-promote matching application/catalog/assets together, retaining confirmed routing unless separately authorized. Git recovery requires reviewed recovery/revert commit; never force push/reset active crawler. Prior 5,288-product catalog and old image references remain recoverable from base.
 
 ## Readiness
 
-**Local release package: READY. Production promotion: BLOCKED.** Remaining gates: verify trigger behavior and actual rollback identity, approve/fix external host routing, and rebuild with verified production configuration. The active crawler remains independent; no task definition, architecture or checkpoint was changed. No push, deployment or production mutation occurred.
+Release v1 preflight ready under explicit unchanged-legacy exception, subject to final lightweight verification of revised commit. Manifest records all nine blob identities, exception, routing and environment-name evidence. Original release tag preserved; revision uses new immutable local tag.
+
+No catalog, application code, crawler state/task, production infrastructure or data modified. No push or deployment occurred.
