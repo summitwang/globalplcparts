@@ -1,0 +1,37 @@
+{
+  "releaseId": "PRODUCTION-RELEASE-v1",
+  "frozenAt": "2026-09-16T03:16:33.733Z",
+  "rawSha256": "71aa14c948425945aa8dd5aa0aaf7c19b6ccda919f933c77c3702bd93ffbd65e",
+  "publicationSha256": "8dc277d9d5e09daf1cc8c3765b7b0e806414608824a6b22cfb3eee045141571c",
+  "trackedCount": 5288,
+  "releaseCount": 13695,
+  "classicAutomationCount": 12697,
+  "added": 8407,
+  "removed": 0,
+  "modifiedExisting": 2,
+  "existingChanges": [
+    {
+      "slug": "siemens-s7-400",
+      "fields": [
+        "image"
+      ],
+      "oldImage": "/product-images/real/siemens/siemens-s7-400.jpg",
+      "newImage": "/product-images/default.jpg"
+    },
+    {
+      "slug": "siemens-et200",
+      "fields": [
+        "image"
+      ],
+      "oldImage": "/product-images/real/siemens/siemens-et200.jpg",
+      "newImage": "/product-images/default.jpg"
+    }
+  ],
+  "removedOperationalFields": {
+    "acquisition": 8407
+  },
+  "preservedSourceURLs": true,
+  "duplicateIdentities": 0,
+  "duplicateSlugs": 0,
+  "addedSlugSetSha256": "c6e0691371161e8106109c44b165afacf324c18f7af2b6f87b13d7aaed16fc5c"
+}

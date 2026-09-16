@@ -1,0 +1,2 @@
+# Preserve the reviewed publication artifact SHA on Windows and Linux.
+data/products.json text eol=lf

@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "releaseId": "PRODUCTION-RELEASE-v1",
+  "frozenAt": "2026-09-16T03:16:33.733Z",
+  "preparedAt": "2026-09-16T03:27:31.438Z",
+  "baseOriginCommit": "6f0772505967e1a1300b4dfe613e6b7331dd232b",
+  "codeHead": "55feca433be39cd48cdc265dd35a5d3b430de3f9",
+  "releaseHead": {
+    "ref": "refs/tags/production-release-v1",
+    "resolveCommand": "git rev-parse refs/tags/production-release-v1^{commit}",
+    "note": "The local tag is created only after this manifest and payload are committed. A commit cannot contain its own literal hash. The final report and resolved sidecar provide the resolved hash."
+  },
+  "releaseBranch": "release/production-v1",
+  "releaseCheckout": "C:/Projects/globalplcparts-release-v1",
+  "snapshotConsistency": "One read of the crawler atomically replaced JSON; validated, fingerprinted and frozen once. No crawler stop or state reset. Later additions are excluded.",
+  "catalog": {
+    "path": "data/products.json",
+    "sha256": "8dc277d9d5e09daf1cc8c3765b7b0e806414608824a6b22cfb3eee045141571c",
+    "rawSnapshotSha256": "71aa14c948425945aa8dd5aa0aaf7c19b6ccda919f933c77c3702bd93ffbd65e",
+    "products": 13695,
+    "classicAutomation": 12697,
+    "previousProductionProducts": 5288,
+    "added": 8407,
+    "removed": 0,
+    "modifiedExisting": [
+      {
+        "slug": "siemens-s7-400",
+        "fields": [
+          "image"
+        ],
+        "oldImage": "/product-images/real/siemens/siemens-s7-400.jpg",
+        "newImage": "/product-images/default.jpg"
+      },
+      {
+        "slug": "siemens-et200",
+        "fields": [
+          "image"
+        ],
+        "oldImage": "/product-images/real/siemens/siemens-et200.jpg",
+        "newImage": "/product-images/default.jpg"
+      }
+    ],
+    "removedOperationalMetadata": {
+      "acquisition": 8407
+    },
+    "sourceURLsPreserved": true,
+    "lineEndings": "LF enforced by .gitattributes",
+    "duplicateIdentities": 0,
+    "duplicateSlugs": 0,
+    "brokenImages": 0,
+    "uniqueImageFiles": 1570
+  },
+  "seo": {
+    "inventory": 14577,
+    "sitemapURLs": 14577,
+    "productChunks": [
+      5000,
+      5000,
+      3695
+    ],
+    "canonicalHost": "https://globalplcparts.com",
+    "environmentIndependent": true,
+    "requiredRouting": "www to apex, permanent 301 or 308, retaining path and query; apex serves application",
+    "currentConflict": "Observed apex HTTP 307 to www. No repository redirect rule; exact external provider rule UNKNOWN.",
+    "robots": "PASS local release HTTP",
+    "sitemap": "PASS local release HTTP",
+    "notFound": "PASS HTTP 404",
+    "structuredData": "PASS serialization and no fabricated offers"
+  },
+  "commitsIncluded": {
+    "reviewed": [
+      "06581493473f6661fd7d77f96fbedca7b80c2a90",
+      "e61020333013b16a56b7631829dfd46ab6b2376d",
+      "b1858d43f9ac55b60e50c0e3c7fbad91b003f281",
+      "69a7b134147cf46d58a18363969b4a0e843e8e5d",
+      "46d76f805ef12c159f6229f2e7342946a95773dd",
+      "56ef9cf4f96c43eed0b5418d8047f071f2d1151d",
+      "55feca433be39cd48cdc265dd35a5d3b430de3f9"
+    ],
+    "releaseCommit": "refs/tags/production-release-v1"
+  },
+  "filesIncluded": {
+    "scope": "Complete Git tree at releaseHead; changed files relative to origin baseline enumerated below",
+    "changedFromOrigin": [
+      ".gitattributes",
+      "app/admin/layout.tsx",
+      "app/api/admin/scraper/start/route.ts",
+      "app/blog/[slug]/page.tsx",
+      "app/blog/page.tsx",
+      "app/brands/[slug]/page.tsx",
+      "app/brands/page.tsx",
+      "app/layout.tsx",
+      "app/page.tsx",
+      "app/products/[slug]/page.tsx",
+      "app/products/page.tsx",
+      "app/request-quote/layout.tsx",
+      "app/robots.ts",
+      "app/search/layout.tsx",
+      "app/search/page.tsx",
+      "app/sitemap.ts",
+      "app/sitemap.xml/route.ts",
+      "app/sitemaps/[name]/route.ts",
+      "components/ProductImage.tsx",
+      "components/ProductListing.tsx",
+      "components/SeoJsonLd.tsx",
+      "data/products.json",
+      "data/seo-blog-links.json",
+      "data/seo-keywords.json",
+      "docs/CLASSIC-COMPLETE-CRAWL.md",
+      "docs/DAILY-OPERATIONS-REPORT-CONTRACT.md",
+      "docs/PRODUCT-IMAGE-INTEGRITY.md",
+      "docs/SCRIPTS-SAFETY-REGISTRY.md",
+      "docs/SEO-OPERATIONS.md",
+      "docs/SEO-SEARCH-CONSOLE.md",
+      "docs/releases/PRODUCTION-RELEASE-v1.catalog-diff.json",
+      "docs/releases/PRODUCTION-RELEASE-v1.json",
+      "docs/releases/PRODUCTION-RELEASE-v1.md",
+      "docs/releases/verify-production-release-v1.cjs",
+      "eslint.config.mjs",
+      "lib/catalog-server.ts",
+      "lib/product-image-policy.js",
+      "lib/seo-core.d.ts",
+      "lib/seo-core.js",
+      "next.config.ts",
+      "public/product-images/default.jpg",
+      "scripts/classic-automation-complete-crawl.js",
+      "scripts/classic-automation-lifecycle.js",
+      "scripts/classic-automation-source.js",
+      "scripts/daily-operations-report.js",
+      "scripts/health-check.js",
+      "scripts/product-image-files.js",
+      "scripts/product-image-integrity.js",
+      "scripts/seo-http-test.js",
+      "scripts/seo-operations-report.js",
+      "scripts/seo-operations.test.js",
+      "tests/classic-complete-crawl.test.js",
+      "tests/classic-lifecycle.test.js",
+      "tests/classic-product-scope.test.js",
+      "tests/daily-operations-report.test.js",
+      "tests/product-image-integrity.test.js"
+    ],
+    "releaseSpecific": [
+      ".gitattributes",
+      "data/products.json",
+      "docs/releases/PRODUCTION-RELEASE-v1.md",
+      "docs/releases/PRODUCTION-RELEASE-v1.json",
+      "docs/releases/PRODUCTION-RELEASE-v1.catalog-diff.json",
+      "docs/releases/verify-production-release-v1.cjs"
+    ],
+    "excluded": [
+      ".env*",
+      "crawler state",
+      "locks",
+      "runtime reports",
+      "crawler backups",
+      "temporary files",
+      "node_modules",
+      ".next"
+    ]
+  },
+  "validation": {
+    "node": "v24.20.0",
+    "npm": "11.19.0",
+    "next": "16.2.6",
+    "dependencyInstall": "npm ci --offline --ignore-scripts --no-audit --no-fund; 437 packages, lockfile unchanged",
+    "lint": {
+      "status": "PASS",
+      "warnings": [
+        "Existing ProductImage native-img warning"
+      ],
+      "releaseVerifier": "PASS after explicit standalone CommonJS import declaration"
+    },
+    "build": {
+      "status": "PASS",
+      "typeScript": "PASS",
+      "scope": "Source build in isolated checkout using non-secret placeholders; not a publishable prebuilt deployment"
+    },
+    "health": {
+      "pass": 15,
+      "warn": 4,
+      "fail": 0,
+      "note": "Includes expected uncommitted release-preparation Git changes; other warnings are image fallback/reuse and historical script inventory"
+    },
+    "seoTests": {
+      "passed": 57,
+      "failed": 0
+    },
+    "httpChecks": {
+      "passed": 29,
+      "failed": 0,
+      "origin": "http://127.0.0.1:3101",
+      "clientJavaScriptExecuted": false,
+      "customerOperationsPerformed": false
+    },
+    "catalogIntegrity": "PASS",
+    "imageIntegrity": "PASS",
+    "secretScan": "PASS: inherited seven-commit gate plus release-specific artifact scan; known synthetic validation/test placeholders are not credentials"
+  },
+  "deployment": {
+    "triggerClassification": "D",
+    "trigger": "Cannot be determined locally",
+    "evidence": [
+      "No tracked .github workflows",
+      "No vercel.json",
+      "No local .vercel/project.json link",
+      "Public Vercel responses do not establish Git integration settings"
+    ],
+    "productionGitCommit": "UNKNOWN",
+    "productionDeploymentId": "UNKNOWN",
+    "productionConfigurationChanged": false,
+    "requires": [
+      "Owner verifies production branch and push/deploy triggers",
+      "Owner records actual rollback deployment ID and current domain rules",
+      "Approve www-to-apex routing correction",
+      "Rebuild source with verified platform production environment variables",
+      "Explicit authorization before push, preview publication or production promotion"
+    ]
+  },
+  "rollback": {
+    "ready": false,
+    "reason": "Actual deployed commit/deployment ID and provider routing configuration UNKNOWN",
+    "previousCatalogRecoverable": true,
+    "previousCatalogCommit": "6f0772505967e1a1300b4dfe613e6b7331dd232b",
+    "previousCatalogGitBlob": "11d4101df55db593a7b119d198036b43fbfb427b",
+    "previousCatalogSha256": "8be2ea82b3ffd936eb533fc98eb2b53701ba6edf0cd12a7ee8f3f11d45763957",
+    "procedure": [
+      "Record actual current Vercel deployment ID and domain redirect settings before any publication",
+      "On failure re-promote that immutable deployment with its paired catalog and assets",
+      "Restore only the previously recorded domain-routing configuration",
+      "If Git recovery is needed create a reviewed revert/recovery commit or checkout; never force push/reset the active crawler",
+      "The previous 5288-product JSON remains recoverable from the specified Git commit/blob; that is not proof of the current production deployment identity"
+    ]
+  },
+  "activeCrawler": {
+    "checkout": "C:/Projects/globalplcparts",
+    "codeAndTaskDefinitionsChanged": false,
+    "stateReset": false,
+    "stopped": false
+  },
+  "pushPerformed": false,
+  "deploymentPerformed": false,
+  "productionMutationPerformed": false,
+  "packageReady": true,
+  "productionPromotionReady": false
+}
