@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { blogPosts } from "@/data/blog-posts";
 import { blogMeta, blogSchema, breadcrumbs } from "@/lib/seo-core";
 import SeoJsonLd from "@/components/SeoJsonLd";
@@ -75,6 +75,10 @@ export default async function BlogPostPage({
           <p className="text-xl text-slate-700">
             {post.description || post.excerpt}
           </p>
+          {/* 明确内容用途，避免将通用采购说明误认为已核实的技术手册。 */}
+          <aside className="border-l-4 border-blue-600 pl-4 text-sm">
+            This article provides general sourcing context. Model-specific technical claims require editorial verification against manufacturer documentation. Use the manufacturer documentation for specifications, wiring, safety and compatibility decisions.
+          </aside>
 
           <section>
             <h2 className="text-3xl font-black text-slate-900 mb-4">
@@ -161,3 +165,7 @@ export default async function BlogPostPage({
     </main>
   );
 }
+
+// 仅对公开内容使用小时级 ISR，保持业务数据与用户请求隔离。
+export const revalidate = 3600;
+export function generateStaticParams() { return []; }

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { readProducts } from '@/lib/catalog-server';
+import { readCatalog } from '@/lib/catalog-server';
 import { notFound } from 'next/navigation';
 import { pageNumber, PAGE_SIZE } from '@/lib/seo-core';
 import ProductImage from '@/components/ProductImage';
@@ -8,7 +8,7 @@ export default async function SearchPage({searchParams}:{searchParams:Promise<Re
   const query=await searchParams;
   const q=typeof query.q==='string'?query.q.trim().slice(0,200):'';
   const terms=q.toLowerCase().split(/\s+/).filter(Boolean);
-  const products=readProducts().filter(p=>terms.every(t=>`${p.brand} ${p.model} ${p.category}`.toLowerCase().includes(t)));
+  const products=readCatalog().search(terms);
   const page=pageNumber(query.page);
   if(!page||page>Math.max(1,Math.ceil(products.length/PAGE_SIZE))) notFound();
   const base=`/search?q=${encodeURIComponent(q)}`;

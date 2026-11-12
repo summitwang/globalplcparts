@@ -1,0 +1,9 @@
+﻿/* eslint-disable @typescript-eslint/no-require-imports -- 离线测试只使用临时目录。 */
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {createCatalogReader}=require('../lib/catalog-cache');
+const p={slug:'abb-one',brand:'ABB',brandSlug:'abb',model:'ONE',category:'PLC',description:'Source'};
+function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gplp-cpu-'));t.after(()=>{assert.ok(path.resolve(dir).startsWith(path.join(path.resolve(os.tmpdir()),'gplp-cpu-')));fs.rmSync(dir,{recursive:true,force:true});});const file=path.join(dir,'products.json');fs.writeFileSync(file,JSON.stringify([p]));return {file,read:createCatalogReader(file)};}
+test('warm catalog reuses parsed snapshot and indexes, preserving search semantics',t=>{const {read}=fixture(t);const a=read();assert.equal(read(),a);assert.equal(a.bySlug.get(p.slug),a.products[0]);assert.deepEqual(a.byBrand.get('abb'),a.products);assert.deepEqual(a.search(['abb','one']),a.products);assert.equal(a.search(['missing']).length,0);assert.ok(Object.isFrozen(a.products[0]));});
+test('atomic replacement invalidates cached snapshot without mutating prior readers',t=>{const {file,read}=fixture(t),old=read();fs.writeFileSync(file+'.tmp',JSON.stringify([p,{...p,slug:'abb-two',model:'TWO'}]));fs.renameSync(file+'.tmp',file);assert.equal(read().products.length,2);assert.equal(old.products.length,1);assert.notEqual(read(),old);});
+test('malformed and duplicate replacements fail closed instead of serving cached data',t=>{const {file,read}=fixture(t);read();fs.writeFileSync(file,'[');assert.throws(read);fs.writeFileSync(file,JSON.stringify([p,p]));assert.throws(read,/Duplicate/);fs.writeFileSync(file,JSON.stringify([p]));assert.equal(read().products.length,1);});
+test('removed catalog is not silently served from process cache',t=>{const {file,read}=fixture(t);read();fs.unlinkSync(file);assert.throws(read);});

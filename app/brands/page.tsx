@@ -1,7 +1,8 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { readProducts } from "@/lib/catalog-server";
 import { coreMeta, brandsFor } from "@/lib/seo-core";
-export const dynamic = "force-dynamic";
+// 仅对公开内容使用小时级 ISR，保持业务数据与用户请求隔离。
+export const revalidate = 3600;
 
 export const metadata = coreMeta("/brands");
 

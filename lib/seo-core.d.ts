@@ -24,6 +24,7 @@ export function coreMeta(path:string,page?:number):Metadata;
 export function safeJson(value:unknown):string;
 export function breadcrumbs(items:string[][]):unknown;
 export function productSchema(product:Product):unknown;
+export function brandSchema(brand:Brand,page?:number):unknown;
 export function blogSchema(blog:Blog):unknown;
 export function homeSchema():unknown;
 export function imageAlt(brand?:string,model?:string):string;

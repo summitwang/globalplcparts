@@ -1,9 +1,10 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Image from "next/image";
 import { readProducts } from "@/lib/catalog-server";
 import { coreMeta, homeSchema, brandsFor } from "@/lib/seo-core";
 import SeoJsonLd from "@/components/SeoJsonLd";
-export const dynamic = "force-dynamic";
+// 仅对公开内容使用小时级 ISR，保持业务数据与用户请求隔离。
+export const revalidate = 3600;
 import ProductImage from "@/components/ProductImage";
 
 const whatsappNumber = "13774696836";
@@ -145,7 +146,7 @@ export default function HomePage() {
       <section className="bg-white border-y">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <SectionHead
-            label="Authorized-style Multi-brand Sourcing"
+            label="Multi-brand Sourcing"
             title="Browse by Manufacturer"
             href="/brands"
             linkText="View All Brands →"
@@ -335,10 +336,10 @@ function SectionHead({
   linkText: string;
 }) {
   return (
-    <div className="flex items-end justify-between gap-6 mb-8">
+    <div className="flex flex-col items-start sm:flex-row sm:items-end justify-between gap-6 mb-8">
       <div>
         <p className="text-blue-600 font-black mb-3">{label}</p>
-        <h2 className="text-4xl font-black">{title}</h2>
+        <h2 className="text-3xl sm:text-4xl font-black">{title}</h2>
       </div>
 
       <Link href={href} className="text-blue-600 font-black whitespace-nowrap">

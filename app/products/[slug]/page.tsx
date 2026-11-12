@@ -1,8 +1,10 @@
-import { readProducts } from "@/lib/catalog-server";
+﻿import { readCatalog } from "@/lib/catalog-server";
 import { notFound, permanentRedirect } from "next/navigation";
 import { productMeta, productSchema, breadcrumbs } from "@/lib/seo-core";
 import SeoJsonLd from "@/components/SeoJsonLd";
-export const dynamic = "force-dynamic";
+// 仅对公开内容使用小时级 ISR，保持业务数据与用户请求隔离。
+export const revalidate = 3600;
+export function generateStaticParams() { return []; }
 import Link from "next/link";
 import ProductImage from "@/components/ProductImage";
 
@@ -10,9 +12,8 @@ const whatsappNumber = "13774696836";
 
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}) {
  const {slug}=await params;
- const product=readProducts().find(p=>p.slug===slug.toLowerCase());
+ const product=readCatalog().bySlug.get(slug.toLowerCase());
  if(!product) notFound();
- if(slug!==product.slug) permanentRedirect('/products/'+product.slug);
  return productMeta(product);
 }
 
@@ -22,16 +23,14 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const products = readProducts();
+  const catalog = readCatalog();
 
-  const product = products.find(
-    (item) => item.slug.toLowerCase() === slug.toLowerCase()
-  );
+  const product = catalog.bySlug.get(slug.toLowerCase());
 
   if (!product) notFound();
   if (slug !== product.slug) permanentRedirect(`/products/${product.slug}`);
 
-  const relatedProducts = products
+  const relatedProducts = (catalog.byBrand.get(product.brandSlug) || [])
     .filter(
       (item) =>
         item.brandSlug === product.brandSlug && item.slug !== product.slug
@@ -46,8 +45,9 @@ export default async function ProductDetailPage({
 
 const productJsonLd = [productSchema(product), breadcrumbs([["Home", "/"], ["Brands", "/brands"], [product.brand, `/brands/${product.brandSlug}`], [product.model, `/products/${product.slug}`]])];
 
+// 长型号允许自然换行，避免移动端网格被最小内容宽度撑开；保留完整型号。
 return (
-  <main className="min-h-screen bg-slate-50 text-slate-900">
+  <main className="min-h-screen bg-slate-50 text-slate-900 [overflow-wrap:anywhere]">
   <SeoJsonLd data={productJsonLd} />
       
 
